@@ -258,6 +258,15 @@ $text .= "
             icon.className = 'fa-solid fa-angle-down';
         }
     }
+        var gradientLeft = document.querySelector('.gradient-left');
+        var gradientRight = document.querySelector('.gradient-right');
+        var container = document.getElementsByClassName('months-container')[0];
+
+        if (container.scrollLeft === 0) {
+            gradientLeft.style.opacity = '0';
+        } else {
+            gradientLeft.style.opacity = '1';
+        }
     function updateGradientVisibility() {
         var container = document.getElementsByClassName('months-container')[0];
         var gradientLeft = document.querySelector('.gradient-left');
