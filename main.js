@@ -2,12 +2,15 @@ function toggleMoreContent(event) {
     event.preventDefault();
     var moreContent = document.getElementById('more-content');
     var icon = document.querySelector('.triangle i');
+    var iconSpan = document.querySelector('.triangle span');
     if (moreContent.style.display === 'none') {
         moreContent.style.display = 'block';
-        icon.className = 'fa-solid fa-angle-up';
+        icon.className = 'fa-solid fa-angle-down';
+        iconSpan.style.paddingTop = '2px';
     } else {
         moreContent.style.display = 'none';
-        icon.className = 'fa-solid fa-angle-down';
+        iconSpan.style.paddingTop = '0.5px';
+        icon.className = 'fa-solid fa-angle-right';
     }
 }
     var gradientLeft = document.querySelector('.gradient-left');
@@ -19,13 +22,10 @@ function toggleMoreContent(event) {
     } else {
         gradientLeft.style.opacity = '1';
     }
-function updateGradientVisibility() {
+function updateGradientVisibilityMonthsScroll() {
     var container = document.getElementsByClassName('months-container')[0];
     var gradientLeft = document.querySelector('.gradient-left');
     var gradientRight = document.querySelector('.gradient-right');
-    console.log
-    // console.log('TESTING' + container.scrollLeft);
-    // console.log(gradientLeft);
 
     if (container.scrollLeft === 0) {
         gradientLeft.style.opacity = '0';
@@ -39,12 +39,33 @@ function updateGradientVisibility() {
         gradientRight.style.opacity = '1';
     }
 }
+
+function updateGradientVisibilityTableOverview() {
+    var courseTableContainer = document.getElementsByClassName('table-container')[0];
+    var tableContainerAfterGradient = document.querySelector('.gradient-table-container-top');
+    var tableContainerBeforeGradient = document.querySelector('.gradient-table-container-bottom');
+    console.log("courseTableContainer.scrollTop = " + courseTableContainer.scrollTop);
+    console.log(tableContainerAfterGradient);
+
+    if (courseTableContainer.scrollTop === 0) {
+        tableContainerAfterGradient.style.opacity = '0';
+    } else {
+        tableContainerAfterGradient.style.opacity = '1';
+    }
+
+    if (courseTableContainer.scrollTop + courseTableContainer.offsetHeight >= courseTableContainer.scrollHeight) {
+        tableContainerBeforeGradient.style.opacity = '0';
+    } else {
+        tableContainerBeforeGradient.style.opacity = '1';
+    }
+}
+
 document.getElementById('triangle').addEventListener('click', toggleMoreContent);
 document.getElementById('show-more-link').addEventListener('click', toggleMoreContent);
 var test = document.getElementsByClassName('months-container')[0];
-// console.log(test);
-// console.log('TESTING 123' + test.scrollLeft);
-test.addEventListener('scroll', updateGradientVisibility);
+
+test.addEventListener('scroll', updateGradientVisibilityMonthsScroll);
+document.getElementsByClassName('table-container')[0].addEventListener('scroll', updateGradientVisibilityTableOverview);
 
 document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('.month-btn');

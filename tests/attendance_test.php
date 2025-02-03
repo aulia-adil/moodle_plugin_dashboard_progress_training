@@ -82,7 +82,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 5,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
@@ -111,7 +111,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 6,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
@@ -140,7 +140,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 5,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
@@ -154,7 +154,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student2->id,
             'statusid' => 5,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
@@ -182,7 +182,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 5,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
@@ -199,7 +199,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 5,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
@@ -227,7 +227,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 5,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
@@ -244,7 +244,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 6,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
@@ -272,7 +272,7 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 5,
             'statusset' => '5,6,7,8',
-            'timetaken' => 1738231655,
+            'timetaken' => time(),
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''

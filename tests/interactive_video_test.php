@@ -23,16 +23,12 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 use PHPUnit\Framework\TestCase;
-use phpmock\MockBuilder;
-use phpmock\phpunit\PHPMock;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/blocks/listallcourses/utils.php');
 
 class Interactive_video_test extends \advanced_testcase {
-    use PHPMock;
-
     protected $course;
 
     protected function setUp(): void {
@@ -345,47 +341,79 @@ class Interactive_video_test extends \advanced_testcase {
         $this->assertCount(0, $result, 'Expected exactly zero interactive video record');   
     }
 
-    public function test_get_interactive_video_duration_already_exist_in_db() {
-        global $DB;
-
-        # create DB record
-        $DB->insert_record("block_listallcourses_videos", [
-            'hvp_id' => 1,
-            'duration' => 100,
-            'video_url' => 'https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet'
-        ]);
-        $result = get_interactive_video_duration('{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}', $DB);
-        
-
-    }
-
     // use PHPMock;
 
-    public function testGetYoutubeDurationIsCalled() {
-        // Mock the $DB object
-        global $DB;
-        // $DB = $this->createMock(stdClass::class);
+    public function test_get_interactive_video_duration_the_video_not_exist_in_youtube() {
+        global $CFG, $DB;
+        $student = $this->getDataGenerator()->create_user();
+        
+        # Create get module id of hvp
+        $moduleId = $DB->get_record('modules', ['name' => 'hvp'], 'id', MUST_EXIST);
+        
+        # Create hvp activity
+        $hvpId = $DB->insert_record('hvp', [
+            'course' => $this->course->id,
+            'name' => 'testing (copy) (copy)',
+            'intro' => '<p>AHAHSDALKSJD</p>',
+            'introformat' => 1,
+            'json_content' => '{"interactiveVideo":{"video":{"files":[{"path":"https://youtu.be/bX1djYUCJ88"}]}}}',
+            'embed_type' => 'div',
+            'disable' => 0,
+            'main_library_id' => 31,
+            'content_type' => NULL,
+            'authors' => '[]',
+            'source' => NULL,
+            'year_from' => NULL,
+            'year_to' => NULL,
+            'license' => 'U',
+            'license_version' => NULL,
+            'changes' => '[]',
+            'license_extras' => NULL,
+            'author_comments' => NULL,
+            'default_language' => NULL,
+            'filtered' => '{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}',
+            'slug' => 'testing-2',
+            'timecreated' => 1738132408,
+            'timemodified' => 1738405724,
+            'completionpass' => 0,
+            'shared' => 0,
+            'synced' => NULL,
+            'hub_id' => NULL,
+            'a11y_title' => NULL
+        ]);
 
-        // // Mock the get_records method to return false
-        // $DB->method('get_records')
-        //     ->willReturn(false);
+        # Create course module of hvp
+        $cmId = $DB->insert_record('course_modules', [
+            'course' => $this->course->id,
+            'module' => $moduleId->id,
+            'instance' => $hvpId, 
+            'section' => 0,
+            'idnumber' => '',
+            'added' => time(),
+            'score' => 0,
+            'indent' => 0,
+            'visible' => 1,
+            'visibleold' => 1,
+            'groupmode' => 0,
+            'groupingid' => 0,
+            'completion' => 0,
+            'completiongradeitemnumber' => NULL,
+            'completionview' => 0,
+            'completionexpected' => 0,
+            'showdescription' => 0,
+            'availability' => NULL,
+            'deletioninprogress' => 0
+        ]);        
+            
+        
+        $DB->insert_record('course_modules_completion', [
+            'coursemoduleid' => $cmId,
+            'userid' => $student->id,
+            'completionstate' => 1,
+            'timemodified' => time() + 0,
+        ]);
 
-        // // Mock the insert_record method
-        // $DB->method('insert_record')
-        //     ->willReturn(true);
-
-        // Mock the get_youtube_duration function
-        $getYoutubeDurationMock = $this->getFunctionMock('', 'get_youtube_duration');
-        $getYoutubeDurationMock->expects($this->once())
-            ->willReturn('PT2M30S');
-
-        // JSON content to be passed to the function
-        $json_content = '{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}';
-
-        // Call the function
-        $duration = get_interactive_video_duration($json_content, $DB);
-
-        // Assert the duration
-        $this->assertEquals('PT2M30S', $duration);
+        $result = getInteractiveVideoData($student->id, 'hvp',$DB, $CFG->phpunit_prefix);
+        $this->assertEquals(null, $result[0]['Durasi'], 'Expected null because the video not exist in youtube');
     }
 }

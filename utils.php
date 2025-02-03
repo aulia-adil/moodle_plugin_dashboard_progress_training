@@ -33,12 +33,13 @@ function get_interactive_video_duration($json_content, $DB) {
         $duration = $video->video_duration;
     } else {
         $duration = get_youtube_duration($youtubeUrl);
-        $DB->insert_record('block_listallcourses_videos', [
-            'video_url' => $youtubeUrl,
-            'video_duration' => $duration,
-        ]);
+        if ($duration !== null) {
+            $DB->insert_record('block_listallcourses_videos', [
+                'video_url' => $youtubeUrl,
+                'video_duration' => $duration,
+            ]);
+        }
     }
-
     return $duration;
 }
 
@@ -66,37 +67,53 @@ function formatDuration($durationTotal) {
     }
 }
 
+/**
+ * Format duration from seconds to hh:mm:ss.
+ *
+ * @param int $seconds Duration in seconds.
+ * @return string Formatted duration in hh:mm:ss.
+ */
+function formatTimeDurationForCourseOverviewTable($seconds) {
+    $hours = floor($seconds / 3600);
+    $minutes = floor(($seconds % 3600) / 60);
+    $seconds = $seconds % 60;
+    return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+}
 
 function get_attendance_sessions($userId, $moduleName, $DB, $dbPrefix = null) {
     global $CFG, $USER, $DB;
     $dbPrefix = $dbPrefix ?? $CFG->prefix;
-    
-    $sqlQueryAttendance = "
-        WITH RECURSIVE numbers AS (
-            SELECT 1 AS n
-            UNION ALL
-            SELECT n + 1
-            FROM numbers
-            WHERE n < (SELECT MAX(1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))) FROM {$dbPrefix}attendance_log l)
-        )
-        SELECT s.description, s.duration, cm.id, l.timetaken
-        FROM {$dbPrefix}attendance_sessions s
-        JOIN {$dbPrefix}attendance_log l ON s.id = l.sessionid
-        JOIN {$dbPrefix}attendance a ON s.attendanceid = a.id
-        JOIN {$dbPrefix}course_modules cm ON cm.instance = a.id
-        JOIN {$dbPrefix}modules m ON cm.module = m.id
-        WHERE l.studentid = :userid
-        AND m.name = :modulename
-        AND l.statusid = (
-            SELECT MIN(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(l.statusset, ',', n.n), ',', -1) AS UNSIGNED))
-            FROM numbers n
-            WHERE n.n <= 1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))
-        )
-    ";
+    $currentYear = date('Y'); // Get the current year
+
+$sqlQueryAttendance = "
+    WITH RECURSIVE numbers AS (
+        SELECT 1 AS n
+        UNION ALL
+        SELECT n + 1
+        FROM numbers
+        WHERE n < (SELECT MAX(1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))) FROM {$dbPrefix}attendance_log l)
+    )
+    SELECT s.description, s.duration, cm.id, l.timetaken
+    FROM {$dbPrefix}attendance_sessions s
+    JOIN {$dbPrefix}attendance_log l ON s.id = l.sessionid
+    JOIN {$dbPrefix}attendance a ON s.attendanceid = a.id
+    JOIN {$dbPrefix}course_modules cm ON cm.instance = a.id
+    JOIN {$dbPrefix}modules m ON cm.module = m.id
+    WHERE l.studentid = :userid
+    AND m.name = :modulename
+    AND YEAR(FROM_UNIXTIME(l.timetaken)) = :currentyear
+    AND l.statusid = (
+        SELECT MIN(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(l.statusset, ',', n.n), ',', -1) AS UNSIGNED))
+        FROM numbers n
+        WHERE n.n <= 1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))
+    )
+";
+
 
     $paramsAttendance = [
         'userid' => $userId,
         'modulename' => $moduleName,
+        'currentyear' => $currentYear
     ];
 
     $activityData = [];
@@ -153,4 +170,15 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
     }
 
     return $activityData;
+}
+
+/**
+ * Calculate the progress percentage based on the total duration and maximum training hours.
+ *
+ * @param int $durationTotal Total duration in seconds.
+ * @param int $maxTrainingHoursAccreditation Maximum training hours for accreditation.
+ * @return float Progress percentage.
+ */
+function calculate_progress($durationTotal, $maxTrainingHoursAccreditation = 20) {
+    return ($durationTotal / 3600) * (100 / $maxTrainingHoursAccreditation); // Scale to 100% for max training hours
 }

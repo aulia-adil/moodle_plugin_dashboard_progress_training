@@ -57,15 +57,10 @@
     background: #e0e0e0;
 }
 
-.simple-table {
-    width: 100%;
-    border-collapse: collapse;
+.triangle {
+    text-align: center;
+    display: inline-block;
+    color: #007bff;
+    box-sizing: border-box;
 }
-.simple-table th, .simple-table td {
-    padding: 8px;
-    text-align: left;
-}
-.simple-table th {
-    background-color: #E8EDFB;
-    font-weight: bold;
-}
+

@@ -57,55 +57,34 @@ class block_listallcourses extends block_base
         $this->content->items = array();
         $this->content->icons = array();
         $this->content->footer = '';
-        $text = '';
 
+        $text = '';
+    
         // Insert myid into $text
         $myId = $USER->id;
         error_log("myid: {$myId}");
-        
 
-        // SQL query to get attendance sessions based on myid
-        // $sqlQueryAttendance = "
-        //     SELECT s.description, s.duration, cm.id, l.timetaken
-        //     FROM mdl_attendance_sessions s
-        //     JOIN mdl_attendance_log l ON s.id = l.sessionid
-        //     JOIN mdl_attendance a ON s.attendanceid = a.id
-        //     JOIN mdl_course_modules cm ON cm.instance = a.id
-        //     WHERE l.studentid = :myid
-        //     AND cm.module = :moduleid
-        //     AND l.statusid = (
-        //         SELECT MIN(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(l.statusset, ',', n.n), ',', -1) AS UNSIGNED))
-        //         FROM (SELECT 1 n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) n
-        //         WHERE n.n <= 1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))
-        //     )
-        // ";
-        // $paramsAttendance = [
-        //     'myid' => $myId,
-        //     'moduleid' => ATTENDANCE_MODULE_NAME,
-        // ];
+        global $CFG;
 
-        // $sqlQueryInteractiveVideo = "
-        //     SELECT h.name, h.json_content, cm.id, cmc.timemodified
-        //     FROM mdl_course_modules_completion cmc
-        //     JOIN mdl_course_modules cm ON cmc.coursemoduleid = cm.id
-        //     JOIN mdl_hvp h ON cm.instance = h.id
-        //     WHERE cmc.userid = :userid
-        //     AND cm.module = :moduleid
-        // ";
+        // $activityData = get_attendance_sessions($myId, "attendance", $DB);
+        // $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
+        $dummyData = [];
 
-        
-        // $paramsInteractiveVideo = [
-        //     'userid' => $myId,
-        //     'moduleid' => "hvp",
-        // ];
+        for ($i = 0; $i < 20; $i++) {
+            $dummyData[] = [
+                'Nama Aktivitas' => 'Activity ' . ($i + 1),
+                'Durasi' => rand(1, 10600), // Random duration or null
+                'Tanggal' => time() - rand(0, 1000000), // Random past timestamp
+                'link' => new moodle_url('/mod/hvp/view.php', ['id' => rand(1, 20)])
+            ];
+        }
 
-
-        // Execute the query
-        // $recordsInteractiveVideo = $DB->get_records_sql($sqlQueryInteractiveVideo, $paramsInteractiveVideo);
-
-
-        $activityData = get_attendance_sessions($myId, "attendance", $DB);
-        $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
+        // // Example usage
+        // foreach ($dummyData as $activity) {
+        //     print_r($activity);
+        // }
+        $activityData = $dummyData;
+        // error_log("activityData: " . print_r($activityData, true));
 
         // Sort activities by date in descending order
         usort($activityData, function ($a, $b) {
@@ -114,22 +93,24 @@ class block_listallcourses extends block_base
 
         $courseOverviewTable = "
         <table class='simple-table' id='course-overview-table'>
-            <thead>
-                <tr>
-                    <th>Nama Aktivitas</th>
-                    <th>Durasi</th>
-                </tr>
+            <thead style='position: sticky; top: -1px; background-color: #fff; z-index: 1;'>
+            <tr>
+                <th>Nama Aktivitas</th>
+                <th>Durasi</th>
+            </tr>
             </thead>
             <tbody>
         ";
 
         $durationTotal = 0;
         foreach ($activityData as $activity) {
-            $durationTotal += $activity['Durasi'];
+            $duration = $activity['Durasi'];
+            if ($duration !== null) {
+                $durationTotal += $duration;
+            }
         }
         $durationTotalCopy = $durationTotal;
-        // define("PROGRESS_BAR_COLOR", "#007bff"); // Blue color
-        // define("PROGRESS_BAR_BACKGROUND_COLOR", "#E9ECEF"); // Light grey color
+        
         $PROGRESS_BAR_COLOR = "#007bff";
         $PROGRESS_BAR_BACKGROUND_COLOR = "#E9ECEF";
 
@@ -139,22 +120,33 @@ class block_listallcourses extends block_base
             $link = $activity['link'];
             $month = date('m', strtotime($activity['Tanggal']));
             $description = str_replace(array('<p>', '</p>'), '', $description);
-
-
-
-            $duration_text = formatDuration($duration);
-
-            $maxTrainingHoursAccreditation = 20;
-            $progress = ($durationTotalCopy / 3600) * (100 / $maxTrainingHoursAccreditation); // Scale to 100% for 20 hours
-
-            $gradient_style = $progress < 100 ? "background:linear-gradient(to right, {$PROGRESS_BAR_COLOR} 0%, {$PROGRESS_BAR_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} 100%) bottom no-repeat; background-size:100% 3px;" : "";
+        
+            if ($duration === null) {
+                // Handle the case where duration is null
+                // For example, you can set a default value or skip processing
+                $duration_text = 'N/A'; // Set a default text for null duration
+                $progress = calculate_progress($durationTotalCopy);
+                // Cap the progress at 100%
+                if ($progress > 100) {
+                    $progress = 100;
+                }
+                $gradient_style = "background:linear-gradient(to right, {$PROGRESS_BAR_COLOR} 0%, {$PROGRESS_BAR_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} 100%) bottom no-repeat; background-size:100% 3px;";
+            } else {
+                $duration_text = formatTimeDurationForCourseOverviewTable($duration);
+          $progress = calculate_progress($durationTotalCopy);
+          if ($progress > 100) {
+            $progress = 100;
+        }
+                $gradient_style = "background:linear-gradient(to right, {$PROGRESS_BAR_COLOR} 0%, {$PROGRESS_BAR_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} 100%) bottom no-repeat; background-size:100% 3px;" ;
+                $durationTotalCopy -= $duration;
+            }
+        
             $courseOverviewTable .= "
-                <tr style='{$gradient_style}' data-month='{$month}'>
+                <tr style='{$gradient_style}; background-color:hsla(224, 70.40%, 94.70%, 0.10);' data-month='{$month}'>
                     <td><a href='{$link}'>{$description}</a></td>
                     <td>{$duration_text}</td>
                 </tr>
             ";
-            $durationTotalCopy -= $duration;
         }
         $courseOverviewTable .= "
                 </tbody>
@@ -167,6 +159,7 @@ class block_listallcourses extends block_base
         if ($progress > 100) {
             $progress = 100; // Cap the progress at 100%
         }
+        
 
         $text .= "
             <div class='progress' style='height: 40px;'>
@@ -176,17 +169,56 @@ class block_listallcourses extends block_base
         ";
 
         $duration_text = formatDuration($durationTotal);
-        $text .= "<div class='d-flex justify-content-between' style='margin-top: 10px;'><span style='color: {$PROGRESS_BAR_COLOR};'>{$duration_text}</span><span>20 Jam</span></div>";
-        // $text .= "<h4 class='text-center mt-3'>{$duration_text}</h4>";
+        $text .= "<h5 class='d-flex justify-content-between' style='margin-top: 10px;'>
+                    <span style='color: {$PROGRESS_BAR_COLOR};'>{$duration_text}</span>
+                    <span>20 Jam</span>
+                </h5>";
+        $text .= "
+        <style>
+        .table-container {
+        display: block;
+        overflow-y: auto;
+        height: 300px;
+        scrollbar-width: none;
+        
+        }
+        .gradient-table-container {
+            position: relative;
+            overflow: hidden;
+    }
+        
+        .gradient-table-container-top,
+.gradient-table-container-bottom {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 30px; /* Height of the gradient */
+    pointer-events: none; /* Allow clicks to pass through */
+    z-index: 1;
+    transition: opacity 1s ease;
+}
+
+.gradient-table-container-top {
+    top: 38px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+
+.gradient-table-container-bottom {
+    bottom: -1px;
+    background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+        </style>
+        ";
 
         $text .= "
 <div class='text-center mt-4'>
-    <a href='#' class='show-more-link' id='show-more-link' style='color: #007bff; display: inline; text-decoration: none;'>
-        Lihat progress training-mu
+    <div class='triangle d-flex justify-content-center align-items-center'>
+        <a href='#' class='show-more-link' id='show-more-link' style='color: #007bff; display: inline; text-decoration: none;'>
+            Lihat detail
         </a>
-    <div class='triangle' style='text-align: center; display: block; color: #007bff;'>
-        <span style='display: inline; margin-top: 5px;'>
-        <i class='fa-solid fa-angle-down' id='triangle' style='display: inline; margin-top: 5px;'></i>
+        <span style='display: inline;  margin-left: 5px; padding-top: 0.5px; box-sizing: border-box; height: 24px; width: 20px;'>
+            <i class='fa-solid fa-angle-right' id='triangle' style='display: inline;color: #007bff;'></i>
         </span>
         
     </div>
@@ -211,12 +243,18 @@ class block_listallcourses extends block_base
             </div>
             <div class='gradient-right'></div>
         </div>
-        <div style='height: 300px; overflow-y: auto;'>
+        <div class='gradient-table-container'>
+        <div class='table-container'>
+        <div class='gradient-table-container-top'></div>
             {$courseOverviewTable}
+        <div class='gradient-table-container-bottom'></div>
+        </div>
+        </div>
         </div>
     </div>
 </div>
 ";
+
         $this->content->text = $text;
 
         return $this->content;
