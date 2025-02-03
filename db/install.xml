@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="blocks/listallcourses/db" VERSION="2025112902" COMMENT="Block List All Courses" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+    <TABLES>
+        <TABLE NAME="block_listallcourses_videos" COMMENT="Table to store video URLs and durations">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+                <FIELD NAME="video_url" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="URL of the video"/>
+                <FIELD NAME="video_duration" TYPE="char" LENGTH="20" NOTNULL="true" COMMENT="Duration of the video"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+        </TABLE>
+    </TABLES>
+</XMLDB>

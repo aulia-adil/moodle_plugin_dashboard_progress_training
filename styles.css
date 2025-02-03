@@ -1,0 +1,71 @@
+.simple-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.simple-table th, .simple-table td {
+    padding: 8px;
+    text-align: left;
+}
+.simple-table th {
+    background-color: #E8EDFB;
+    font-weight: bold;
+}
+
+.months-container-wrapper {
+    position: relative;
+}
+.months-container {
+    display: flex;
+    overflow-x: auto;
+    padding: 10px 0;
+    gap: 10px;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none;  /* For Internet Explorer and Edge */
+}
+.months-container::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+.gradient-left,
+.gradient-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50px;
+    pointer-events: none;
+    transition: opacity 1s ease;
+}
+.gradient-left {
+    left: 0;
+    background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+.gradient-right {
+    right: 0;
+    background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+.month-btn {
+    display: flex;
+    height: 27px;
+    padding: 5px 11px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    background: var(--Neutral-50, #F7F8F9);
+    border: none;
+    cursor: pointer;
+}
+.month-btn:hover {
+    background: #e0e0e0;
+}
+
+.simple-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.simple-table th, .simple-table td {
+    padding: 8px;
+    text-align: left;
+}
+.simple-table th {
+    background-color: #E8EDFB;
+    font-weight: bold;
+}

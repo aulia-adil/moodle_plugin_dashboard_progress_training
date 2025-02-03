@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Progress Training Pertahun';
-$string['pluginname_display'] = 'Progress Training Pertahun';
+$string['pluginname'] = 'Progress Training Tahunan';
+$string['pluginname_display'] = 'Progress Training Tahunan';
 // $string['pluginname:addinstance'] = 'Add a new pluginname block';
 // $string['pluginname:myaddinstance'] = 'Add a new pluginname block to the My Moodle page';

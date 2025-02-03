@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/utils.php');
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -40,12 +41,12 @@ class block_listallcourses extends block_base
      */
     public function get_content()
     {
-        global $DB, $USER, $CFG, $OUTPUT;
+        global $DB, $USER, $CFG, $OUTPUT, $PAGE;
+        $PAGE->requires->js('/blocks/listallcourses/main.js');
+        $PAGE->requires->css('/blocks/listallcourses/styles.css');
         if ($this->content !== null) {
             return $this->content;
         }
-
-        error_log("TESTING 123");
 
         if (empty($this->instance)) {
             $this->content = '';
@@ -59,121 +60,109 @@ class block_listallcourses extends block_base
         $text = '';
 
         // Insert myid into $text
-        $myid = $USER->id;
+        $myId = $USER->id;
+        error_log("myid: {$myId}");
+        
 
         // SQL query to get attendance sessions based on myid
-        $sqlquery = "
-            SELECT s.description, s.duration
-            FROM mdl_attendance_sessions s
-            JOIN mdl_attendance_log l ON s.id = l.sessionid
-            WHERE l.studentid = :myid
-        ";
-        $params = array('myid' => $myid);
+        // $sqlQueryAttendance = "
+        //     SELECT s.description, s.duration, cm.id, l.timetaken
+        //     FROM mdl_attendance_sessions s
+        //     JOIN mdl_attendance_log l ON s.id = l.sessionid
+        //     JOIN mdl_attendance a ON s.attendanceid = a.id
+        //     JOIN mdl_course_modules cm ON cm.instance = a.id
+        //     WHERE l.studentid = :myid
+        //     AND cm.module = :moduleid
+        //     AND l.statusid = (
+        //         SELECT MIN(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(l.statusset, ',', n.n), ',', -1) AS UNSIGNED))
+        //         FROM (SELECT 1 n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) n
+        //         WHERE n.n <= 1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))
+        //     )
+        // ";
+        // $paramsAttendance = [
+        //     'myid' => $myId,
+        //     'moduleid' => ATTENDANCE_MODULE_NAME,
+        // ];
+
+        // $sqlQueryInteractiveVideo = "
+        //     SELECT h.name, h.json_content, cm.id, cmc.timemodified
+        //     FROM mdl_course_modules_completion cmc
+        //     JOIN mdl_course_modules cm ON cmc.coursemoduleid = cm.id
+        //     JOIN mdl_hvp h ON cm.instance = h.id
+        //     WHERE cmc.userid = :userid
+        //     AND cm.module = :moduleid
+        // ";
+
+        
+        // $paramsInteractiveVideo = [
+        //     'userid' => $myId,
+        //     'moduleid' => "hvp",
+        // ];
+
 
         // Execute the query
-        $records = $DB->get_records_sql($sqlquery, $params);
-        $durationTotal = 0;
-        $table = "
-<style>
-    .simple-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .simple-table th, .simple-table td {
-        padding: 8px;
-        text-align: left;
-    }
-    .simple-table th {
-        background-color: #E8EDFB;
-        font-weight: bold;
-    }
-</style>
-
-<table class='simple-table'>
-    <thead>
-        <tr>
-            <th>Nama Training</th>
-            <th>Durasi</th>
-        </tr>
-    </thead>
-    <tbody>
-";
+        // $recordsInteractiveVideo = $DB->get_records_sql($sqlQueryInteractiveVideo, $paramsInteractiveVideo);
 
 
-if ($records) {
-    foreach ($records as $record) {
-        $duration = $record->duration;
-        $durationTotal .= $duration;
-        $hours = floor($duration / 3600);
-        $minutes = floor(($duration % 3600) / 60);
+        $activityData = get_attendance_sessions($myId, "attendance", $DB);
+        $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
 
-        $hours = sprintf("%02d", $hours);
-        $minutes = sprintf("%02d", $minutes);
+        // Sort activities by date in descending order
+        usort($activityData, function ($a, $b) {
+            return strtotime($b['Tanggal']) - strtotime($a['Tanggal']);
+        });
 
-        if ($hours > 0) {
-            if ($minutes > 0) {
-                $duration_text = "{$hours} Jam {$minutes} Menit";
-            } else {
-                $duration_text = "{$hours} Jam";
-            }
-        } else {
-            $duration_text = "{$minutes} Menit";
-        }
-        $max_hours = 20;
-        $progress = ($durationTotal / 3600) * (100 / $max_hours); // Scale to 100% for 20 hours
-
-        $description = $record->description;
-        $description = str_replace(array('<p>', '</p>'), '', $description);
-        $gradient_style = $progress < 100 ? "background:linear-gradient(to right, #007bff 0%, #007bff {$progress}%, #E9ECEF {$progress}%, #E9ECEF 100%) bottom no-repeat; background-size:100% 3px;" : "";
-        $table .= "
-        <tr style='{$gradient_style}'>
-            <td>{$description}</td>
-            <td>{$duration_text}</td>
-        </tr>
+        $courseOverviewTable = "
+        <table class='simple-table' id='course-overview-table'>
+            <thead>
+                <tr>
+                    <th>Nama Aktivitas</th>
+                    <th>Durasi</th>
+                </tr>
+            </thead>
+            <tbody>
         ";
-    }
-} else {
-    $table .= "
-    <tr>
-        <td colspan='2'>No attendance sessions found.</td>
-    </tr>
-    ";
-}
 
-$table .= "
-    </tbody>
-</table>
-";
-$durationTotal = 0;
-
-        // Append the results to $text
-        if ($records) {
-            foreach ($records as $record) {
-                $duration = $record->duration;
-                $hours = floor($duration / 3600);
-                $minutes = floor(($duration % 3600) / 60);
-
-                $hours = sprintf("%02d", $hours);
-                $minutes = sprintf("%02d", $minutes);
-
-                if ($hours > 0) {
-                    if ($minutes > 0) {
-                        $duration_text = "{$hours} Jam {$minutes} Menit";
-                    } else {
-                        $duration_text = "{$hours} Jam";
-                    }
-                } else {
-                    $duration_text = "{$minutes} Menit";
-                }
-                $durationTotal += $duration;
-            }
-        } else {
-            $text .= "<p>No attendance sessions found.</p>";
+        $durationTotal = 0;
+        foreach ($activityData as $activity) {
+            $durationTotal += $activity['Durasi'];
         }
+        $durationTotalCopy = $durationTotal;
+        // define("PROGRESS_BAR_COLOR", "#007bff"); // Blue color
+        // define("PROGRESS_BAR_BACKGROUND_COLOR", "#E9ECEF"); // Light grey color
+        $PROGRESS_BAR_COLOR = "#007bff";
+        $PROGRESS_BAR_BACKGROUND_COLOR = "#E9ECEF";
+
+        foreach ($activityData as $activity) {
+            $description = $activity['Nama Aktivitas'];
+            $duration = $activity['Durasi'];
+            $link = $activity['link'];
+            $month = date('m', strtotime($activity['Tanggal']));
+            $description = str_replace(array('<p>', '</p>'), '', $description);
+
+
+
+            $duration_text = formatDuration($duration);
+
+            $maxTrainingHoursAccreditation = 20;
+            $progress = ($durationTotalCopy / 3600) * (100 / $maxTrainingHoursAccreditation); // Scale to 100% for 20 hours
+
+            $gradient_style = $progress < 100 ? "background:linear-gradient(to right, {$PROGRESS_BAR_COLOR} 0%, {$PROGRESS_BAR_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} 100%) bottom no-repeat; background-size:100% 3px;" : "";
+            $courseOverviewTable .= "
+                <tr style='{$gradient_style}' data-month='{$month}'>
+                    <td><a href='{$link}'>{$description}</a></td>
+                    <td>{$duration_text}</td>
+                </tr>
+            ";
+            $durationTotalCopy -= $duration;
+        }
+        $courseOverviewTable .= "
+                </tbody>
+            </table>";
 
         // Example progress bar
-        $max_hours = 20;
-        $progress = ($durationTotal / 3600) * (100 / $max_hours); // Scale to 100% for 20 hours
+        $maxTrainingHoursAccreditation = 20;
+        $progress = ($durationTotal / 3600) * (100 / $maxTrainingHoursAccreditation); // Scale to 100% for 20 hours
 
         if ($progress > 100) {
             $progress = 100; // Cap the progress at 100%
@@ -186,23 +175,9 @@ $durationTotal = 0;
             </div>
         ";
 
-        $hours = floor($durationTotal / 3600);
-        $minutes = floor(($durationTotal % 3600) / 60);
-
-        $hours = sprintf("%02d", $hours);
-        $minutes = sprintf("%02d", $minutes);
-
-        if ($hours > 0) {
-            if ($minutes > 0) {
-                $duration_text = "{$hours} Jam {$minutes} Menit";
-            } else {
-                $duration_text = "{$hours} Jam";
-            }
-        } else {
-            $duration_text = "{$minutes} Menit";
-        }
-
-        $text .= "<h4 class='text-center mt-3'>{$duration_text}</h4>";
+        $duration_text = formatDuration($durationTotal);
+        $text .= "<div class='d-flex justify-content-between' style='margin-top: 10px;'><span style='color: {$PROGRESS_BAR_COLOR};'>{$duration_text}</span><span>20 Jam</span></div>";
+        // $text .= "<h4 class='text-center mt-3'>{$duration_text}</h4>";
 
         $text .= "
 <div class='text-center mt-4'>
@@ -220,132 +195,28 @@ $durationTotal = 0;
         <div class='months-container-wrapper'>
             <div class='gradient-left' id='left-most'></div>
             <div class='months-container'>
-            <button class='month-btn'>Semua</button>
-                <button class='month-btn'>January</button>
-                <button class='month-btn'>February</button>
-                <button class='month-btn'>March</button>
-                <button class='month-btn'>April</button>
-                <button class='month-btn'>May</button>
-                <button class='month-btn'>June</button>
-                <button class='month-btn'>July</button>
-                <button class='month-btn'>August</button>
-                <button class='month-btn'>September</button>
-                <button class='month-btn'>October</button>
-                <button class='month-btn'>November</button>
-                <button class='month-btn'>December</button>
+                <button class='month-btn' data-month='all'>Semua</button>
+                <button class='month-btn' data-month='01'>January</button>
+                <button class='month-btn' data-month='02'>February</button>
+                <button class='month-btn' data-month='03'>March</button>
+                <button class='month-btn' data-month='04'>April</button>
+                <button class='month-btn' data-month='05'>May</button>
+                <button class='month-btn' data-month='06'>June</button>
+                <button class='month-btn' data-month='07'>July</button>
+                <button class='month-btn' data-month='08'>August</button>
+                <button class='month-btn' data-month='09'>September</button>
+                <button class='month-btn' data-month='10'>October</button>
+                <button class='month-btn' data-month='11'>November</button>
+                <button class='month-btn' data-month='12'>December</button>
             </div>
             <div class='gradient-right'></div>
         </div>
         <div style='height: 300px; overflow-y: auto;'>
-            {$table}
+            {$courseOverviewTable}
         </div>
     </div>
 </div>
 ";
-
-// Add JavaScript to handle the show more link click
-$text .= "
-<script>
-    function toggleMoreContent(event) {
-        event.preventDefault();
-        var moreContent = document.getElementById('more-content');
-        var icon = document.querySelector('.triangle i');
-        if (moreContent.style.display === 'none') {
-            moreContent.style.display = 'block';
-            icon.className = 'fa-solid fa-angle-up';
-        } else {
-            moreContent.style.display = 'none';
-            icon.className = 'fa-solid fa-angle-down';
-        }
-    }
-        var gradientLeft = document.querySelector('.gradient-left');
-        var gradientRight = document.querySelector('.gradient-right');
-        var container = document.getElementsByClassName('months-container')[0];
-
-        if (container.scrollLeft === 0) {
-            gradientLeft.style.opacity = '0';
-        } else {
-            gradientLeft.style.opacity = '1';
-        }
-    function updateGradientVisibility() {
-        var container = document.getElementsByClassName('months-container')[0];
-        var gradientLeft = document.querySelector('.gradient-left');
-        var gradientRight = document.querySelector('.gradient-right');
-        console.log
-        // console.log('TESTING' + container.scrollLeft);
-        // console.log(gradientLeft);
-
-        if (container.scrollLeft === 0) {
-            gradientLeft.style.opacity = '0';
-        } else {
-            gradientLeft.style.opacity = '1';
-        }
-
-        if (container.scrollLeft + container.offsetWidth >= container.scrollWidth) {
-            gradientRight.style.opacity = '0';
-        } else {
-            gradientRight.style.opacity = '1';
-        }
-    }
-    document.getElementById('triangle').addEventListener('click', toggleMoreContent);
-    document.getElementById('show-more-link').addEventListener('click', toggleMoreContent);
-    var test = document.getElementsByClassName('months-container')[0];
-    console.log(test);
-    // console.log('TESTING 123' + test.scrollLeft);
-    test.addEventListener('scroll', updateGradientVisibility);
-</script>
-";
-
-// Add CSS for the month buttons
-$text .= "
-<style>
-    .months-container-wrapper {
-        position: relative;
-    }
-    .months-container {
-        display: flex;
-        overflow-x: auto;
-        padding: 10px 0;
-        gap: 10px;
-        scrollbar-width: none; /* For Firefox */
-        -ms-overflow-style: none;  /* For Internet Explorer and Edge */
-    }
-    .months-container::-webkit-scrollbar {
-        display: none; /* For Chrome, Safari, and Opera */
-    }
-    .gradient-left,
-    .gradient-right {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 50px;
-        pointer-events: none;
-        transition: opacity 1s ease;
-    }
-    .gradient-left {
-        left: 0;
-        background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
-    }
-    .gradient-right {
-        right: 0;
-        background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
-    }
-    .month-btn {
-        display: flex;
-        height: 27px;
-        padding: 5px 11px;
-        justify-content: center;
-        align-items: center;
-        border-radius: 8px;
-        background: var(--Neutral-50, #F7F8F9);
-        border: none;
-        cursor: pointer;
-    }
-    .month-btn:hover {
-        background: #e0e0e0;
-    }
-</style>";
-
         $this->content->text = $text;
 
         return $this->content;
@@ -362,6 +233,11 @@ $text .= "
         // Load user defined title and make sure it's never empty.
         if (empty($this->config->title)) {
             $this->title = get_string('pluginname', 'block_listallcourses');
+            $this->title = "<div class='d-flex justify-content-between'
+            ><span>{$this->title}</span><span 
+        class='help-icon' title='Help' style='cursor: pointer; color:#008196;' data-bs-toggle='tooltip' data-bs-placement='top' title='Tooltip on top'>
+            <i class='fa fa-question-circle'></i>
+        </span></div>";
         } else {
             $this->title = $this->config->title;
         }
