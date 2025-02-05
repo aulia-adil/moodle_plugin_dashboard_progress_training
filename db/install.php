@@ -26,7 +26,7 @@
 /**
  * Custom code to be run on installing the plugin.
  */
-function xmldb_block_listallcourses_install() {
+function xmldb_block_yearly_training_progress_install() {
 
     return true;
 }

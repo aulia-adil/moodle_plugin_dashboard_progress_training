@@ -27,14 +27,14 @@ function get_interactive_video_duration($json_content, $DB) {
     // Get the path
     $youtubeUrl = $data['interactiveVideo']['video']['files'][0]['path'];
 
-    $video = $DB->get_record('block_listallcourses_videos', ['video_url' => $youtubeUrl]);
+    $video = $DB->get_record('block_yearly_progress_training_videos', ['video_url' => $youtubeUrl]);
 
     if ($video) {
         $duration = $video->video_duration;
     } else {
         $duration = get_youtube_duration($youtubeUrl);
         if ($duration !== null) {
-            $DB->insert_record('block_listallcourses_videos', [
+            $DB->insert_record('block_yearly_progress_training_videos', [
                 'video_url' => $youtubeUrl,
                 'video_duration' => $duration,
             ]);

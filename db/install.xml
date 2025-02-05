@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="blocks/listallcourses/db" VERSION="2025112902" COMMENT="Block List All Courses" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<XMLDB PATH="blocks/yearly_progress_training/db" VERSION="2025112902" COMMENT="Block Yearly Progress Training for Hospital" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
     <TABLES>
-        <TABLE NAME="block_listallcourses_videos" COMMENT="Table to store video URLs and durations">
+        <TABLE NAME="block_yearly_progress_training_videos" COMMENT="Table to store video URLs and durations">
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
                 <FIELD NAME="video_url" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="URL of the video"/>

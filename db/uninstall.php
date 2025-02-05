@@ -26,7 +26,7 @@
 /**
  * Custom uninstallation procedure.
  */
-function xmldb_block_listallcourses_uninstall() {
+function xmldb_block_yearly_training_progress_uninstall() {
 
     return true;
 }
