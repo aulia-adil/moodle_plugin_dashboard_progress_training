@@ -22,7 +22,7 @@ require_once(__DIR__ . '/utils.php');
  * @copyright   2025 Your Name <you@example.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class block_listallcourses extends block_base
+class block_yearly_training_progress extends block_base
 {
 
     /**
@@ -66,24 +66,24 @@ class block_listallcourses extends block_base
 
         global $CFG;
 
-        $activityData = get_attendance_sessions($myId, "attendance", $DB);
-        $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
-        // $dummyData = [];
+        // $activityData = get_attendance_sessions($myId, "attendance", $DB);
+        // $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
+        $dummyData = [];
 
-        // for ($i = 0; $i < 20; $i++) {
-        //     $dummyData[] = [
-        //         'Nama Aktivitas' => 'Activity ' . ($i + 1),
-        //         'Durasi' => rand(1, 10600), // Random duration or null
-        //         'Tanggal' => time() - rand(0, 1000000), // Random past timestamp
-        //         'link' => new moodle_url('/mod/hvp/view.php', ['id' => rand(1, 20)])
-        //     ];
-        // }
+        for ($i = 0; $i < 20; $i++) {
+            $dummyData[] = [
+                'Nama Aktivitas' => 'Activity ' . ($i + 1),
+                'Durasi' => rand(1, 10600), // Random duration or null
+                'Tanggal' => time() - rand(0, 1000000), // Random past timestamp
+                'link' => new moodle_url('/mod/hvp/view.php', ['id' => rand(1, 20)])
+            ];
+        }
+        $activityData = $dummyData;
 
         // // Example usage
         // foreach ($dummyData as $activity) {
         //     print_r($activity);
         // }
-        // $activityData = $dummyData;
         // error_log("activityData: " . print_r($activityData, true));
 
         // Sort activities by date in descending order
@@ -300,7 +300,7 @@ class block_listallcourses extends block_base
         </span>
         
     </div>
-    <div id='more-content' style='display: block; border-top: 1px solid #ccc; margin-top: 16px;'>
+    <div id='more-content' style='display: none; border-top: 1px solid #ccc; margin-top: 16px;'>
         
         <div class='months-container-wrapper'>
             <div class='gradient-left' id='left-most'></div>
