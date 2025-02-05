@@ -66,24 +66,24 @@ class block_listallcourses extends block_base
 
         global $CFG;
 
-        // $activityData = get_attendance_sessions($myId, "attendance", $DB);
-        // $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
-        $dummyData = [];
+        $activityData = get_attendance_sessions($myId, "attendance", $DB);
+        $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
+        // $dummyData = [];
 
-        for ($i = 0; $i < 20; $i++) {
-            $dummyData[] = [
-                'Nama Aktivitas' => 'Activity ' . ($i + 1),
-                'Durasi' => rand(1, 10600), // Random duration or null
-                'Tanggal' => time() - rand(0, 1000000), // Random past timestamp
-                'link' => new moodle_url('/mod/hvp/view.php', ['id' => rand(1, 20)])
-            ];
-        }
+        // for ($i = 0; $i < 20; $i++) {
+        //     $dummyData[] = [
+        //         'Nama Aktivitas' => 'Activity ' . ($i + 1),
+        //         'Durasi' => rand(1, 10600), // Random duration or null
+        //         'Tanggal' => time() - rand(0, 1000000), // Random past timestamp
+        //         'link' => new moodle_url('/mod/hvp/view.php', ['id' => rand(1, 20)])
+        //     ];
+        // }
 
         // // Example usage
         // foreach ($dummyData as $activity) {
         //     print_r($activity);
         // }
-        $activityData = $dummyData;
+        // $activityData = $dummyData;
         // error_log("activityData: " . print_r($activityData, true));
 
         // Sort activities by date in descending order
@@ -238,6 +238,54 @@ class block_listallcourses extends block_base
     color: black; /* Change text color */
     box-sizing: border-box; /* Ensure the button size includes border */
 }
+
+.tooltip-text {
+    visibility: hidden;
+    width: 250px;
+    background-color: #fff;
+    color: black;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid #CED4DA;
+    padding: 15px;
+    position: absolute;
+    z-index: 2;
+    top: -4px;
+    left: -256px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 16px;
+    font-weight: 400;
+    text-align: left;
+}
+
+.tooltip-text::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: -10.5px;
+    margin-top: 0;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent transparent #FFFF;
+    z-index: 1;
+}
+
+.tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: -12px;
+    margin-top: 0;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent transparent #CED4DA;
+}
+
+.help-icon:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
         </style>
         ";
 
@@ -303,8 +351,9 @@ class block_listallcourses extends block_base
             $this->title = get_string('pluginname', 'block_listallcourses');
             $this->title = "<div class='d-flex justify-content-between'
             ><span>{$this->title}</span><span 
-        class='help-icon' title='Help' style='cursor: pointer; color:#008196;' data-bs-toggle='tooltip' data-bs-placement='top' title='Tooltip on top'>
+        class='help-icon' title='Help' style='cursor: pointer; color:#008196; position: relative;'>
             <i class='fa fa-question-circle'></i>
+            <span class='tooltip-text'>Sesuai dengan standar akreditasi rumah sakit, setiap staf diwajibkan mengikuti minimal <strong>20 jam pelatihan dalam setahun</strong>. Grafik dashboard ini akan membantu Anda memantau pelatihan Anda. Setiap kali Anda menyelesaikan aktivitas pelatihan, seperti <strong>menonton video</strong> atau <strong>melakukan presensi</strong>, sistem akan mencatatnya di dashboard ini. </span>
         </span></div>";
         } else {
             $this->title = $this->config->title;
