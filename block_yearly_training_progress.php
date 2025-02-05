@@ -16,9 +16,9 @@ require_once(__DIR__ . '/utils.php');
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Block listallcourses is defined here.
+ * Block yearly_training_progress is defined here.
  *
- * @package     block_listallcourses
+ * @package     block_yearly_training_progress
  * @copyright   2025 Your Name <you@example.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -31,7 +31,7 @@ class block_yearly_training_progress extends block_base
     public function init()
     {
         // Needed by Moodle to differentiate between blocks.
-        $this->title = get_string('pluginname', 'block_listallcourses');
+        $this->title = get_string('pluginname', 'block_yearly_training_progress');
     }
 
     /**
@@ -42,8 +42,8 @@ class block_yearly_training_progress extends block_base
     public function get_content()
     {
         global $DB, $USER, $CFG, $OUTPUT, $PAGE;
-        $PAGE->requires->js('/blocks/listallcourses/main.js');
-        $PAGE->requires->css('/blocks/listallcourses/styles.css');
+        $PAGE->requires->js('/blocks/yearly_training_progress/main.js');
+        $PAGE->requires->css('/blocks/yearly_training_progress/styles.css');
         if ($this->content !== null) {
             return $this->content;
         }
@@ -66,19 +66,19 @@ class block_yearly_training_progress extends block_base
 
         global $CFG;
 
-        // $activityData = get_attendance_sessions($myId, "attendance", $DB);
-        // $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
-        $dummyData = [];
+        $activityData = get_attendance_sessions($myId, "attendance", $DB);
+        $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
+        // $dummyData = [];
 
-        for ($i = 0; $i < 20; $i++) {
-            $dummyData[] = [
-                'Nama Aktivitas' => 'Activity ' . ($i + 1),
-                'Durasi' => rand(1, 10600), // Random duration or null
-                'Tanggal' => time() - rand(0, 1000000), // Random past timestamp
-                'link' => new moodle_url('/mod/hvp/view.php', ['id' => rand(1, 20)])
-            ];
-        }
-        $activityData = $dummyData;
+        // for ($i = 0; $i < 20; $i++) {
+        //     $dummyData[] = [
+        //         'Nama Aktivitas' => 'Activity ' . ($i + 1),
+        //         'Durasi' => rand(1, 10600), // Random duration or null
+        //         'Tanggal' => time() - rand(0, 1000000), // Random past timestamp
+        //         'link' => new moodle_url('/mod/hvp/view.php', ['id' => rand(1, 20)])
+        //     ];
+        // }
+        // $activityData = $dummyData;
 
         // // Example usage
         // foreach ($dummyData as $activity) {
@@ -348,7 +348,7 @@ class block_yearly_training_progress extends block_base
 
         // Load user defined title and make sure it's never empty.
         if (empty($this->config->title)) {
-            $this->title = get_string('pluginname', 'block_listallcourses');
+            $this->title = get_string('pluginname', 'block_yearly_training_progress');
             $this->title = "<div class='d-flex justify-content-between'
             ><span>{$this->title}</span><span 
         class='help-icon' title='Help' style='cursor: pointer; color:#008196; position: relative;'>
@@ -378,7 +378,7 @@ class block_yearly_training_progress extends block_base
     public function applicable_formats()
     {
         return array(
-            "all" => true,
+            "all" => true
         );
     }
 

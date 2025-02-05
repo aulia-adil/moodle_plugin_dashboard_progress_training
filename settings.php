@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    $settings = new admin_settingpage('block_listallcourses_settings', new lang_string('pluginname', 'block_listallcourses'));
+    $settings = new admin_settingpage('block_yearly_training_progress_settings', new lang_string('pluginname', 'block_yearly_training_progress'));
 
     // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($ADMIN->fulltree) {
