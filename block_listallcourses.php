@@ -94,7 +94,7 @@ class block_listallcourses extends block_base
         $courseOverviewTable = "
         <table class='simple-table' id='course-overview-table'>
             <thead style='position: sticky; top: -1px; background-color: #fff; z-index: 1;'>
-            <tr>
+            <tr data-month='all'>
                 <th>Nama Aktivitas</th>
                 <th>Durasi</th>
             </tr>
@@ -208,6 +208,36 @@ class block_listallcourses extends block_base
     bottom: -1px;
     background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
 }
+
+.month-btn {
+    display: flex;
+    height: 27px;
+    padding: 5px 11px;
+    justify-content: center;
+    align-items: center;
+    
+    background: var(--Neutral-50, #F7F8F9);
+    border: 2px solid #F7F8F9;
+    cursor: pointer;
+    box-sizing: border-box; /* Ensure the button size includes border */
+}
+.month-btn:hover {
+    background: #e0e0e0;
+    border: 2px solid #e0e0e0;
+    box-sizing: border-box; /* Ensure the button size includes border */
+}
+
+.month-btn.persistent-focus {
+    border: 2px solid #e0e0e0; /* Add border when focused */
+    box-sizing: border-box; /* Ensure the button size includes border */
+}
+
+.month-btn:active {
+    background-color: #e0e0e0; /* Change background color when clicked */
+    border: 2px solid #e0e0e0; /* Add border when focused */
+    color: black; /* Change text color */
+    box-sizing: border-box; /* Ensure the button size includes border */
+}
         </style>
         ";
 
@@ -227,7 +257,7 @@ class block_listallcourses extends block_base
         <div class='months-container-wrapper'>
             <div class='gradient-left' id='left-most'></div>
             <div class='months-container'>
-                <button class='month-btn' data-month='all'>Semua</button>
+                <button class='month-btn persistent-focus' data-month='all'>Semua</button>
                 <button class='month-btn' data-month='01'>January</button>
                 <button class='month-btn' data-month='02'>February</button>
                 <button class='month-btn' data-month='03'>March</button>

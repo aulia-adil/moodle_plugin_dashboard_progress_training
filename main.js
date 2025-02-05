@@ -39,13 +39,23 @@ function updateGradientVisibilityMonthsScroll() {
         gradientRight.style.opacity = '1';
     }
 }
+var courseTableContainer = document.getElementsByClassName('table-container')[0];
+var tableContainerAfterGradient = document.querySelector('.gradient-table-container-top');
+var tableContainerBeforeGradient = document.querySelector('.gradient-table-container-bottom');
+// console.log("courseTableContainer.scrollTop = " + courseTableContainer.scrollTop);
+// console.log(tableContainerAfterGradient);
 
+if (courseTableContainer.scrollTop === 0) {
+    tableContainerAfterGradient.style.opacity = '0';
+} else {
+    tableContainerAfterGradient.style.opacity = '1';
+}
 function updateGradientVisibilityTableOverview() {
     var courseTableContainer = document.getElementsByClassName('table-container')[0];
     var tableContainerAfterGradient = document.querySelector('.gradient-table-container-top');
     var tableContainerBeforeGradient = document.querySelector('.gradient-table-container-bottom');
-    console.log("courseTableContainer.scrollTop = " + courseTableContainer.scrollTop);
-    console.log(tableContainerAfterGradient);
+    // console.log("courseTableContainer.scrollTop = " + courseTableContainer.scrollTop);
+    // console.log(tableContainerAfterGradient);
 
     if (courseTableContainer.scrollTop === 0) {
         tableContainerAfterGradient.style.opacity = '0';
@@ -69,13 +79,18 @@ document.getElementsByClassName('table-container')[0].addEventListener('scroll',
 
 document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('.month-btn');
-    const rows = document.querySelectorAll('#course-overview-table tr');
+    const rows = document.querySelectorAll('#course-overview-table tbody tr');
     console.log(rows);
 
     buttons.forEach(button => {
         button.addEventListener('click', function() {
             const month = this.getAttribute('data-month');
-            // console.log(month);
+            button.classList.add('persistent-focus');
+            buttons.forEach(b => {
+                if (b !== button) {
+                    b.classList.remove('persistent-focus');
+                }
+            });
 
             rows.forEach(row => {
                 console.log("row.getAttribute('data-month') = " + row.getAttribute('data-month'));
@@ -89,4 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
 });
+

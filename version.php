@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_listallcourses';
 $plugin->release = '0.1.0';
-$plugin->version   = 2025112911; // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2025112912; // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2023100908;
 $plugin->supported = [
 

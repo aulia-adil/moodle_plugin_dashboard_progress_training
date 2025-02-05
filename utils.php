@@ -93,7 +93,7 @@ $sqlQueryAttendance = "
         FROM numbers
         WHERE n < (SELECT MAX(1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))) FROM {$dbPrefix}attendance_log l)
     )
-    SELECT s.description, s.duration, cm.id, l.timetaken
+    SELECT s.description, s.duration, cm.id, s.sessdate
     FROM {$dbPrefix}attendance_sessions s
     JOIN {$dbPrefix}attendance_log l ON s.id = l.sessionid
     JOIN {$dbPrefix}attendance a ON s.attendanceid = a.id
@@ -101,7 +101,7 @@ $sqlQueryAttendance = "
     JOIN {$dbPrefix}modules m ON cm.module = m.id
     WHERE l.studentid = :userid
     AND m.name = :modulename
-    AND YEAR(FROM_UNIXTIME(l.timetaken)) = :currentyear
+    AND YEAR(FROM_UNIXTIME(s.sessdate)) = :currentyear
     AND l.statusid = (
         SELECT MIN(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(l.statusset, ',', n.n), ',', -1) AS UNSIGNED))
         FROM numbers n
@@ -124,7 +124,7 @@ $sqlQueryAttendance = "
             $activityData[] = [
                 'Nama Aktivitas' => $recordAttendance->description,
                 'Durasi' => $recordAttendance->duration,
-                'Tanggal' => date('Y-m-d', $recordAttendance->timetaken),
+                'Tanggal' => date('Y-m-d', $recordAttendance->sessdate),
                 'link' => new moodle_url('/mod/attendance/view.php', ['id' => $recordAttendance->id])
             ];
         }
@@ -144,6 +144,7 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
         JOIN {$dbPrefix}hvp h ON cm.instance = h.id
         JOIN {$dbPrefix}modules m ON cm.module = m.id
         WHERE cmc.userid = :userid
+        AND YEAR(FROM_UNIXTIME(h.timecreated)) = :currentyear
         AND m.name = :modulename
         AND cmc.completionstate = :completionstate
     ";
@@ -152,6 +153,7 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
         'userid' => $userId,
         'modulename' => $moduleName,
         'completionstate' => $COMPLETION_STATUS_COMPLETED,
+        'currentyear' => date('Y')
     ];
 
     $recordsInteractiveVideo = $DB->get_records_sql($sqlQueryInteractiveVideo, $paramsInteractiveVideo);

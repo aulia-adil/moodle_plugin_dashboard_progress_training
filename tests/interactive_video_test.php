@@ -416,4 +416,209 @@ class Interactive_video_test extends \advanced_testcase {
         $result = getInteractiveVideoData($student->id, 'hvp',$DB, $CFG->phpunit_prefix);
         $this->assertEquals(null, $result[0]['Durasi'], 'Expected null because the video not exist in youtube');
     }
+
+    public function test_video_data_next_year_and_last_year_not_counted() {
+        global $DB, $CFG;
+
+        $student = $this->getDataGenerator()->create_user();
+
+        # Create get module id of hvp
+        $moduleId = $DB->get_record('modules', ['name' => 'hvp'], 'id', MUST_EXIST);
+        
+        # FOR THIS YEAR
+        # Create hvp activity
+        $hvpId = $DB->insert_record('hvp', [
+            'course' => $this->course->id,
+            'name' => 'testing 1',
+            'intro' => '<p>AHAHSDALKSJD</p>',
+            'introformat' => 1,
+            'json_content' => '{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}',
+            'embed_type' => 'div',
+            'disable' => 0,
+            'main_library_id' => 31,
+            'content_type' => NULL,
+            'authors' => '[]',
+            'source' => NULL,
+            'year_from' => NULL,
+            'year_to' => NULL,
+            'license' => 'U',
+            'license_version' => NULL,
+            'changes' => '[]',
+            'license_extras' => NULL,
+            'author_comments' => NULL,
+            'default_language' => NULL,
+            'filtered' => '{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}',
+            'slug' => 'testing-2',
+            'timecreated' => time(),
+            'timemodified' => 1738405724,
+            'completionpass' => 0,
+            'shared' => 0,
+            'synced' => NULL,
+            'hub_id' => NULL,
+            'a11y_title' => NULL
+        ]);
+
+        # Create course module of hvp
+        $cmId = $DB->insert_record('course_modules', [
+            'course' => $this->course->id,
+            'module' => $moduleId->id,
+            'instance' => $hvpId, 
+            'section' => 0,
+            'idnumber' => '',
+            'added' => time(),
+            'score' => 0,
+            'indent' => 0,
+            'visible' => 1,
+            'visibleold' => 1,
+            'groupmode' => 0,
+            'groupingid' => 0,
+            'completion' => 0,
+            'completiongradeitemnumber' => NULL,
+            'completionview' => 0,
+            'completionexpected' => 0,
+            'showdescription' => 0,
+            'availability' => NULL,
+            'deletioninprogress' => 0
+        ]);        
+            
+        
+        $DB->insert_record('course_modules_completion', [
+            'coursemoduleid' => $cmId,
+            'userid' => $student->id,
+            'completionstate' => 1,
+            'timemodified' => time() + 0,
+        ]);
+
+        # FOR LAST YEAR
+        # Create hvp activity
+        $hvpId = $DB->insert_record('hvp', [
+            'course' => $this->course->id,
+            'name' => 'testing 2',
+            'intro' => '<p>AHAHSDALKSJD</p>',
+            'introformat' => 1,
+            'json_content' => '{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}',
+            'embed_type' => 'div',
+            'disable' => 0,
+            'main_library_id' => 31,
+            'content_type' => NULL,
+            'authors' => '[]',
+            'source' => NULL,
+            'year_from' => NULL,
+            'year_to' => NULL,
+            'license' => 'U',
+            'license_version' => NULL,
+            'changes' => '[]',
+            'license_extras' => NULL,
+            'author_comments' => NULL,
+            'default_language' => NULL,
+            'filtered' => '{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}',
+            'slug' => 'testing-2',
+            'timecreated' => strtotime('-1 year'),
+            'timemodified' => 1738405724,
+            'completionpass' => 0,
+            'shared' => 0,
+            'synced' => NULL,
+            'hub_id' => NULL,
+            'a11y_title' => NULL
+        ]);
+
+        # Create course module of hvp
+        $cmId = $DB->insert_record('course_modules', [
+            'course' => $this->course->id,
+            'module' => $moduleId->id,
+            'instance' => $hvpId, 
+            'section' => 0,
+            'idnumber' => '',
+            'added' => time(),
+            'score' => 0,
+            'indent' => 0,
+            'visible' => 1,
+            'visibleold' => 1,
+            'groupmode' => 0,
+            'groupingid' => 0,
+            'completion' => 0,
+            'completiongradeitemnumber' => NULL,
+            'completionview' => 0,
+            'completionexpected' => 0,
+            'showdescription' => 0,
+            'availability' => NULL,
+            'deletioninprogress' => 0
+        ]);        
+            
+        
+        $DB->insert_record('course_modules_completion', [
+            'coursemoduleid' => $cmId,
+            'userid' => $student->id,
+            'completionstate' => 1,
+            'timemodified' => time() + 0,
+        ]);
+
+        # FOR NEXT YEAR
+        # Create hvp activity
+        $hvpId = $DB->insert_record('hvp', [
+            'course' => $this->course->id,
+            'name' => 'testing 3',
+            'intro' => '<p>AHAHSDALKSJD</p>',
+            'introformat' => 1,
+            'json_content' => '{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}',
+            'embed_type' => 'div',
+            'disable' => 0,
+            'main_library_id' => 31,
+            'content_type' => NULL,
+            'authors' => '[]',
+            'source' => NULL,
+            'year_from' => NULL,
+            'year_to' => NULL,
+            'license' => 'U',
+            'license_version' => NULL,
+            'changes' => '[]',
+            'license_extras' => NULL,
+            'author_comments' => NULL,
+            'default_language' => NULL,
+            'filtered' => '{"interactiveVideo":{"video":{"files":[{"path":"https://www.youtube.com/watch?v=MOoIs-fth9k&ab_channel=DailyDoseOfInternet"}]}}}',
+            'slug' => 'testing-2',
+            'timecreated' => strtotime('+1 year'),
+            'timemodified' => 1738405724,
+            'completionpass' => 0,
+            'shared' => 0,
+            'synced' => NULL,
+            'hub_id' => NULL,
+            'a11y_title' => NULL
+        ]);
+
+        # Create course module of hvp
+        $cmId = $DB->insert_record('course_modules', [
+            'course' => $this->course->id,
+            'module' => $moduleId->id,
+            'instance' => $hvpId, 
+            'section' => 0,
+            'idnumber' => '',
+            'added' => time(),
+            'score' => 0,
+            'indent' => 0,
+            'visible' => 1,
+            'visibleold' => 1,
+            'groupmode' => 0,
+            'groupingid' => 0,
+            'completion' => 0,
+            'completiongradeitemnumber' => NULL,
+            'completionview' => 0,
+            'completionexpected' => 0,
+            'showdescription' => 0,
+            'availability' => NULL,
+            'deletioninprogress' => 0
+        ]);        
+            
+        
+        $DB->insert_record('course_modules_completion', [
+            'coursemoduleid' => $cmId,
+            'userid' => $student->id,
+            'completionstate' => 1,
+            'timemodified' => time() + 0,
+        ]);
+
+        $result = getInteractiveVideoData($student->id, 'hvp',$DB, $CFG->phpunit_prefix);
+        $this->assertEquals(1, count($result));
+        $this->assertEquals("testing 1", $result[0]["Nama Aktivitas"]);
+    }
 }

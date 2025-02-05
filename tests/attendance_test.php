@@ -74,7 +74,7 @@ class Attendance_test extends \advanced_testcase {
         $session = $DB->insert_record('attendance_sessions', [
             'attendanceid' => $this->attendance->id,
             'description' => 'Test Session',
-            'duration' => 3600
+            'duration' => 3600, 'sessdate' => time()
         ]);
         
         $DB->insert_record('attendance_log', [
@@ -103,7 +103,7 @@ class Attendance_test extends \advanced_testcase {
         $session = $DB->insert_record('attendance_sessions', [
             'attendanceid' => $this->attendance->id,
             'description' => 'Test Session',
-            'duration' => 3600
+            'duration' => 3600, 'sessdate' => time()
         ]);
         
         $DB->insert_record('attendance_log', [
@@ -132,7 +132,7 @@ class Attendance_test extends \advanced_testcase {
         $session = $DB->insert_record('attendance_sessions', [
             'attendanceid' => $this->attendance->id,
             'description' => 'Test Session',
-            'duration' => 3600
+            'duration' => 3600, 'sessdate' => time()
         ]);
         
         $DB->insert_record('attendance_log', [
@@ -174,7 +174,7 @@ class Attendance_test extends \advanced_testcase {
         $session = $DB->insert_record('attendance_sessions', [
             'attendanceid' => $this->attendance->id,
             'description' => 'Test Session',
-            'duration' => 3600
+            'duration' => 3600, 'sessdate' => time()
         ]);
         
         $DB->insert_record('attendance_log', [
@@ -191,7 +191,7 @@ class Attendance_test extends \advanced_testcase {
         $session2 = $DB->insert_record('attendance_sessions', [
             'attendanceid' => $this->attendance->id,
             'description' => 'Test Session 321',
-            'duration' => 3600
+            'duration' => 3600, 'sessdate' => time()
         ]);
         
         $DB->insert_record('attendance_log', [
@@ -219,7 +219,7 @@ class Attendance_test extends \advanced_testcase {
         $session = $DB->insert_record('attendance_sessions', [
             'attendanceid' => $this->attendance->id,
             'description' => 'Test Session',
-            'duration' => 3600
+            'duration' => 3600, 'sessdate' => time()
         ]);
         
         $DB->insert_record('attendance_log', [
@@ -236,7 +236,7 @@ class Attendance_test extends \advanced_testcase {
         $session2 = $DB->insert_record('attendance_sessions', [
             'attendanceid' => $this->attendance->id,
             'description' => 'Test Session 321',
-            'duration' => 3600
+            'duration' => 3600, 'sessdate' => time()
         ]);
         
         $DB->insert_record('attendance_log', [
@@ -264,7 +264,8 @@ class Attendance_test extends \advanced_testcase {
         $session = $DB->insert_record('attendance_sessions', [
             'attendanceid' => $this->attendance->id,
             'description' => 'Test Session',
-            'duration' => 3600
+            'duration' => 3600,
+            'sessdate' => time()
         ]);
         
         $DB->insert_record('attendance_log', [
@@ -272,11 +273,12 @@ class Attendance_test extends \advanced_testcase {
             'studentid' => $student->id,
             'statusid' => 5,
             'statusset' => '5,6,7,8',
-            'timetaken' => time(),
+            'timetaken' => time() + 100,
             'takenby' => 2,
             'remarks' => '',
             'ipaddress' => ''
         ]);
+        
 
         $result = get_attendance_sessions($student->id, "attendance", $DB, $CFG->phpunit_prefix);
         $this->assertCount(1, $result, 'Expected exactly one attendance record');
@@ -290,4 +292,72 @@ class Attendance_test extends \advanced_testcase {
         $this->assertCount(0, $result, 'Expected exactly one attendance record');
     }
 
+    public function test_create_attendance_record_for_next_year_and_last_year_return_nothing() {
+        global $DB, $CFG;
+
+        // Create a test user.
+        $student = $this->getDataGenerator()->create_user();
+
+        $session = $DB->insert_record('attendance_sessions', [
+            'attendanceid' => $this->attendance->id,
+            'description' => 'Test Session',
+            'duration' => 3600,
+            'sessdate' => strtotime('-1 year')
+        ]);
+        
+        $DB->insert_record('attendance_log', [
+            'sessionid' => $session,
+            'studentid' => $student->id,
+            'statusid' => 5,
+            'statusset' => '5,6,7,8',
+            'timetaken' => time() + 100,
+            'takenby' => 2,
+            'remarks' => '',
+            'ipaddress' => ''
+        ]);
+        
+        $session = $DB->insert_record('attendance_sessions', [
+            'attendanceid' => $this->attendance->id,
+            'description' => 'Test Session',
+            'duration' => 3600,
+            'sessdate' => strtotime('+1 year')
+        ]);
+        
+        $DB->insert_record('attendance_log', [
+            'sessionid' => $session,
+            'studentid' => $student->id,
+            'statusid' => 5,
+            'statusset' => '5,6,7,8',
+            'timetaken' => time() + 100,
+            'takenby' => 2,
+            'remarks' => '',
+            'ipaddress' => ''
+        ]);
+        
+
+        $result = get_attendance_sessions($student->id, "attendance", $DB, $CFG->phpunit_prefix);
+        $this->assertCount(0, $result, 'Expected exactly one attendance record');
+
+        $session = $DB->insert_record('attendance_sessions', [
+            'attendanceid' => $this->attendance->id,
+            'description' => 'Test Session',
+            'duration' => 3600,
+            'sessdate' => time()
+        ]);
+        
+        $DB->insert_record('attendance_log', [
+            'sessionid' => $session,
+            'studentid' => $student->id,
+            'statusid' => 5,
+            'statusset' => '5,6,7,8',
+            'timetaken' => time() + 100,
+            'takenby' => 2,
+            'remarks' => '',
+            'ipaddress' => ''
+        ]);
+
+        $result = get_attendance_sessions($student->id, "attendance", $DB, $CFG->phpunit_prefix);
+        $this->assertCount(1, $result, 'Expected exactly one attendance record');
+        $this->assertEquals('Test Session', $result[0]['Nama Aktivitas'], 'Expected description to match');
+    }
 }
