@@ -78,6 +78,28 @@ test.addEventListener('scroll', updateGradientVisibilityMonthsScroll);
 document.getElementsByClassName('table-container')[0].addEventListener('scroll', updateGradientVisibilityTableOverview);
 
 document.addEventListener('DOMContentLoaded', function() {
+    const descriptions = document.querySelectorAll('.description');
+    descriptions.forEach(description => {
+        const fullText = description.getAttribute('data-full-text');
+        let maxLength;
+
+        if (window.innerWidth < 576) {
+            maxLength = 30; // Mobile devices
+        } else if (window.innerWidth < 768) {
+            maxLength = 40; // Tablets
+        } else {
+            maxLength = 50; // Desktops
+        }
+
+        if (fullText.length > maxLength) {
+            description.textContent = fullText.substring(0, maxLength) + '...';
+        } else {
+            description.textContent = fullText;
+        }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('.month-btn');
     const rows = document.querySelectorAll('#course-overview-table tbody tr');
     console.log(rows);

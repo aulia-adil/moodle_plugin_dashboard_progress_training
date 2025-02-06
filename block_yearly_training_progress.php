@@ -143,7 +143,7 @@ class block_yearly_training_progress extends block_base
         
             $courseOverviewTable .= "
                 <tr style='{$gradient_style}; background-color:hsla(224, 70.40%, 94.70%, 0.10);' data-month='{$month}'>
-                    <td><a href='{$link}'>{$description}</a></td>
+                    <td><a href='{$link}' class='description' data-full-text='{$description}'>{$description}</a></td>
                     <td>{$duration_text}</td>
                 </tr>
             ";

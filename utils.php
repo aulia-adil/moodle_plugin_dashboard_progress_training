@@ -27,14 +27,14 @@ function get_interactive_video_duration($json_content, $DB) {
     // Get the path
     $youtubeUrl = $data['interactiveVideo']['video']['files'][0]['path'];
 
-    $video = $DB->get_record('block_yearly_progress_training_videos', ['video_url' => $youtubeUrl]);
+    $video = $DB->get_record('block_yearly_training_progress_videos', ['video_url' => $youtubeUrl]);
 
     if ($video) {
         $duration = $video->video_duration;
     } else {
         $duration = get_youtube_duration($youtubeUrl);
         if ($duration !== null) {
-            $DB->insert_record('block_yearly_progress_training_videos', [
+            $DB->insert_record('block_yearly_training_progress_videos', [
                 'video_url' => $youtubeUrl,
                 'video_duration' => $duration,
             ]);
@@ -125,7 +125,7 @@ $sqlQueryAttendance = "
                 'Nama Aktivitas' => $recordAttendance->description,
                 'Durasi' => $recordAttendance->duration,
                 'Tanggal' => date('Y-m-d', $recordAttendance->sessdate),
-                'link' => new moodle_url('/mod/attendance/view.php', ['id' => $recordAttendance->id])
+                'link' => new moodle_url('/mod/attendance/view.php', ['id' => $recordAttendance->id, "view" => 5])
             ];
         }
     }
@@ -146,13 +146,13 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
         WHERE cmc.userid = :userid
         AND YEAR(FROM_UNIXTIME(h.timecreated)) = :currentyear
         AND m.name = :modulename
-        AND cmc.completionstate = :completionstate
+        AND cmc.completionstate <> :completionstate
     ";
-    $COMPLETION_STATUS_COMPLETED = 1;
+    $COMPLETION_STATUS_INCOMPLETE = 0;
     $paramsInteractiveVideo = [
         'userid' => $userId,
         'modulename' => $moduleName,
-        'completionstate' => $COMPLETION_STATUS_COMPLETED,
+        'completionstate' => $COMPLETION_STATUS_INCOMPLETE,
         'currentyear' => date('Y')
     ];
 
