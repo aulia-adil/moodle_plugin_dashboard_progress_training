@@ -55,7 +55,7 @@ class Attendance_test extends \advanced_testcase {
     protected function setUp(): void {
         $this->resetAfterTest(true);
         global $CFG;
-        require_once($CFG->dirroot . '/blocks/listallcourses/utils.php');
+        require_once($CFG->dirroot . '/blocks/yearly_training_progress/utils.php');
 
         // Create test data for attendance sessions.
         $course = $this->getDataGenerator()->create_course();

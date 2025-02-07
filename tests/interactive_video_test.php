@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot . '/blocks/listallcourses/utils.php');
+require_once($CFG->dirroot . '/blocks/yearly_training_progress/utils.php');
 
 class Interactive_video_test extends \advanced_testcase {
     protected $course;
@@ -34,7 +34,6 @@ class Interactive_video_test extends \advanced_testcase {
     protected function setUp(): void {
         $this->resetAfterTest(true);
         global $CFG, $DB;
-        require_once($CFG->dirroot . '/blocks/listallcourses/utils.php');
 
         // Create test data for attendance sessions.
         $this->course = $this->getDataGenerator()->create_course();
