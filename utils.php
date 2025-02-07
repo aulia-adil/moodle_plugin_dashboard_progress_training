@@ -93,7 +93,7 @@ $sqlQueryAttendance = "
         FROM numbers
         WHERE n < (SELECT MAX(1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))) FROM {$dbPrefix}attendance_log l)
     )
-    SELECT s.description, s.duration, cm.id, s.sessdate
+    SELECT s.description, s.duration, cm.id, s.sessdate, l.timetaken
     FROM {$dbPrefix}attendance_sessions s
     JOIN {$dbPrefix}attendance_log l ON s.id = l.sessionid
     JOIN {$dbPrefix}attendance a ON s.attendanceid = a.id
@@ -119,13 +119,26 @@ $sqlQueryAttendance = "
     $activityData = [];
 
     $recordsAttendance = $DB->get_records_sql($sqlQueryAttendance, $paramsAttendance);
+
+    
+    
     if ($recordsAttendance) {
         foreach ($recordsAttendance as $recordAttendance) {
+            $datetimeTimetaken = null;
+            if ($recordAttendance->timetaken) {
+                $datetime = new DateTime();
+                $datetime->setTimestamp($recordAttendance->timetaken);
+                $formatter = new IntlDateFormatter('id_ID', IntlDateFormatter::FULL, IntlDateFormatter::FULL);
+                $formatter->setPattern('HH:mm, dd MMMM yyyy');
+                $datetimeTimetaken = $formatter->format($datetime);
+            }
             $activityData[] = [
                 'Nama Aktivitas' => $recordAttendance->description,
                 'Durasi' => $recordAttendance->duration,
                 'Tanggal' => date('Y-m-d', $recordAttendance->sessdate),
-                'link' => new moodle_url('/mod/attendance/view.php', ['id' => $recordAttendance->id, "view" => 5])
+                'link' => new moodle_url('/mod/attendance/view.php', ['id' => $recordAttendance->id, "view" => 5]),
+                'Waktu Pencatatan Aktivitas' => $datetimeTimetaken,
+                'Tipe Aktivitas' => 'Presensi Kehadiran'
             ];
         }
     }
@@ -138,7 +151,7 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
     $dbPrefix = $dbPrefix ?? $CFG->prefix;
 
     $sqlQueryInteractiveVideo = "
-        SELECT h.name, h.json_content, cm.id, cmc.timemodified
+        SELECT h.name, h.json_content, cm.id, cmc.timemodified 
         FROM {$dbPrefix}course_modules_completion cmc
         JOIN {$dbPrefix}course_modules cm ON cmc.coursemoduleid = cm.id
         JOIN {$dbPrefix}hvp h ON cm.instance = h.id
@@ -162,11 +175,18 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
 
     if ($recordsInteractiveVideo) {
         foreach ($recordsInteractiveVideo as $recordInteractiveVideo) {
+            $datetime = new DateTime();
+            $datetime->setTimestamp($recordInteractiveVideo->timemodified);
+            $formatter = new IntlDateFormatter('id_ID', IntlDateFormatter::FULL, IntlDateFormatter::FULL);
+            $formatter->setPattern('HH:mm, dd MMMM yyyy');
+            $datetimeTimetaken = $formatter->format($datetime);
             $activityData[] = [
                 'Nama Aktivitas' => $recordInteractiveVideo->name,
                 'Durasi' => get_interactive_video_duration($recordInteractiveVideo->json_content, $DB),
                 'Tanggal' => $recordInteractiveVideo->timemodified,
-                'link' => new moodle_url('/mod/hvp/view.php', ['id' => $recordInteractiveVideo->id])
+                'link' => new moodle_url('/mod/hvp/view.php', ['id' => $recordInteractiveVideo->id]),
+                'Waktu Pencatatan Aktivitas' => $datetimeTimetaken,
+                'Tipe Aktivitas' => 'Video Interaktif'
             ];
         }
     }

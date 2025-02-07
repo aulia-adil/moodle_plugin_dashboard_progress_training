@@ -59,7 +59,7 @@ class block_yearly_training_progress extends block_base
         $this->content->footer = '';
 
         $text = '';
-    
+
         // Insert myid into $text
         $myId = $USER->id;
         error_log("myid: {$myId}");
@@ -67,6 +67,7 @@ class block_yearly_training_progress extends block_base
         global $CFG;
 
         $activityData = get_attendance_sessions($myId, "attendance", $DB);
+        error_log("activityData: " . print_r($activityData, true));
         $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
         // $dummyData = [];
 
@@ -110,7 +111,7 @@ class block_yearly_training_progress extends block_base
             }
         }
         $durationTotalCopy = $durationTotal;
-        
+
         $PROGRESS_BAR_COLOR = "#007bff";
         $PROGRESS_BAR_BACKGROUND_COLOR = "#E9ECEF";
 
@@ -120,7 +121,7 @@ class block_yearly_training_progress extends block_base
             $link = $activity['link'];
             $month = date('m', strtotime($activity['Tanggal']));
             $description = str_replace(array('<p>', '</p>'), '', $description);
-        
+
             if ($duration === null) {
                 // Handle the case where duration is null
                 // For example, you can set a default value or skip processing
@@ -133,17 +134,34 @@ class block_yearly_training_progress extends block_base
                 $gradient_style = "background:linear-gradient(to right, {$PROGRESS_BAR_COLOR} 0%, {$PROGRESS_BAR_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} 100%) bottom no-repeat; background-size:100% 3px;";
             } else {
                 $duration_text = formatTimeDurationForCourseOverviewTable($duration);
-          $progress = calculate_progress($durationTotalCopy);
-          if ($progress > 100) {
-            $progress = 100;
-        }
-                $gradient_style = "background:linear-gradient(to right, {$PROGRESS_BAR_COLOR} 0%, {$PROGRESS_BAR_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} 100%) bottom no-repeat; background-size:100% 3px;" ;
+                $progress = calculate_progress($durationTotalCopy);
+                if ($progress > 100) {
+                    $progress = 100;
+                }
+                $gradient_style = "background:linear-gradient(to right, {$PROGRESS_BAR_COLOR} 0%, {$PROGRESS_BAR_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} 100%) bottom no-repeat; background-size:100% 3px;";
                 $durationTotalCopy -= $duration;
             }
-        
+
+            // $courseOverviewTable .= "
+            //     <tr style='{$gradient_style}; background-color:hsla(224, 70.40%, 94.70%, 0.10);' data-month='{$month}'>
+            //         <td><a href='{$link}' class='description' data-full-text='{$description}'>{$description}</a></td>
+            //         <td>{$duration_text}</td>
+            //     </tr>
+            // ";
+
+            // <a href='#' class='description' data-full-text='{$description}' data-activity-name='{$description}' data-activity-time='{$waktuPencatatanAktivitas}' data-activity-duration='{$durationOverlayText}' data-activity-link='{$link}'>
+
+            $waktuPencatatanAktivitas = $activity['Waktu Pencatatan Aktivitas'];
+            $durationOverlayText = "N/A";
+            if ($duration) {
+                $durationOverlayText = formatDuration($duration);
+            }
+            $activityType = $activity['Tipe Aktivitas'];
             $courseOverviewTable .= "
                 <tr style='{$gradient_style}; background-color:hsla(224, 70.40%, 94.70%, 0.10);' data-month='{$month}'>
-                    <td><a href='{$link}' class='description' data-full-text='{$description}'>{$description}</a></td>
+                    <td>
+                    <a href='#' class='description' data-full-text='{$description}' data-activity-name='{$description}' data-activity-time='{$waktuPencatatanAktivitas}' data-activity-duration='{$durationOverlayText}' data-activity-link='{$link}'
+                    data-activity-type='{$activityType}'></a></td>
                     <td>{$duration_text}</td>
                 </tr>
             ";
@@ -159,7 +177,7 @@ class block_yearly_training_progress extends block_base
         if ($progress > 100) {
             $progress = 100; // Cap the progress at 100%
         }
-        
+
 
         $text .= "
             <div class='progress' style='height: 40px;'>
@@ -286,6 +304,38 @@ class block_yearly_training_progress extends block_base
     visibility: visible;
     opacity: 1;
 }
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.overlay-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    width: 80%;
+    max-width: 500px;
+    text-align: left;
+    position: relative;
+    top: -5%;
+}
+
+.close-btn {
+    position: absolute;
+    top: 0px;
+    right: 20px;
+    font-size: 30px;
+    cursor: pointer;
+}
         </style>
         ";
 
@@ -300,7 +350,7 @@ class block_yearly_training_progress extends block_base
         </span>
         
     </div>
-    <div id='more-content' style='display: none; border-top: 1px solid #ccc; margin-top: 16px;'>
+    <div id='more-content' style='display: block; border-top: 1px solid #ccc; margin-top: 16px;'>
         
         <div class='months-container-wrapper'>
             <div class='gradient-left' id='left-most'></div>
@@ -326,6 +376,24 @@ class block_yearly_training_progress extends block_base
         <div class='gradient-table-container-top'></div>
             {$courseOverviewTable}
         <div class='gradient-table-container-bottom'></div>
+        <div id='overlay' class='overlay'>
+    <div class='overlay-content'>
+        <span class='close-btn'>&times;</span>
+        <h6>Nama Aktivitas: </h6>
+        <p id='overlay-activity-name'></p>
+        <h6>Waktu Pencatatan Aktivitas: </h6>
+        <p id='overlay-activity-time'></p>
+        <h6>Durasi: </h6>
+        <p id='overlay-activity-duration'></p>
+        <h6>Tipe Aktivitas: </h6>
+        <p id='overlay-activity-type'></p>
+        <h6>Link: </h6>
+        <a href='#' id='overlay-activity-link' target='_blank'>Klik ini
+        <i class='fa fa-external-link-alt' id='new-tab-icon' style='margin-left: 5px; cursor: pointer;'></i>
+        </a>
+        
+    </div>
+</div>
         </div>
         </div>
         </div>

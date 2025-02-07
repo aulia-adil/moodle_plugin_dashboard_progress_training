@@ -128,3 +128,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const descriptions = document.querySelectorAll('.description');
+    const overlay = document.getElementById('overlay');
+    const overlayActivityName = document.getElementById('overlay-activity-name');
+    const overlayActivityTime = document.getElementById('overlay-activity-time');
+    const overlayActivityDuration = document.getElementById('overlay-activity-duration');
+    const overlayActivityType = document.getElementById('overlay-activity-type');
+    const overlayActivityLink = document.getElementById('overlay-activity-link');
+    const closeBtn = document.querySelector('.close-btn');
+    const newTabIcon = document.getElementById('new-tab-icon');
+
+    descriptions.forEach(description => {
+        description.addEventListener('click', function(event) {
+            event.preventDefault();
+            overlayActivityName.textContent = description.getAttribute('data-activity-name');
+            overlayActivityTime.textContent = description.getAttribute('data-activity-time');
+            overlayActivityDuration.textContent = description.getAttribute('data-activity-duration');
+            overlayActivityLink.href = description.getAttribute('data-activity-link');
+            overlayActivityType.textContent = description.getAttribute('data-activity-type');
+            overlay.style.display = 'flex';
+        });
+    });
+
+    newTabIcon.addEventListener('click', function(event) {
+        event.preventDefault();
+        window.open(overlayActivityLink.href, '_blank');
+    });
+
+    closeBtn.addEventListener('click', function() {
+        overlay.style.display = 'none';
+    });
+
+    window.addEventListener('click', function(event) {
+        // console.log("event.target = " + event.target);
+        if (event.target === overlay) {
+            // console.log("overlayContent.contains(event.target) = " + overlayContent.contains(event.target));
+            overlay.style.display = 'none';
+        }
+    });
+});
