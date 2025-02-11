@@ -93,7 +93,9 @@ $sqlQueryAttendance = "
         FROM numbers
         WHERE n < (SELECT MAX(1 + LENGTH(l.statusset) - LENGTH(REPLACE(l.statusset, ',', ''))) FROM {$dbPrefix}attendance_log l)
     )
-    SELECT s.description, s.duration, cm.id, s.sessdate, l.timetaken
+    SELECT 
+        ROW_NUMBER() OVER (ORDER BY cm.id) AS rownum,
+        s.description, s.duration, cm.id, s.sessdate, l.timetaken
     FROM {$dbPrefix}attendance_sessions s
     JOIN {$dbPrefix}attendance_log l ON s.id = l.sessionid
     JOIN {$dbPrefix}attendance a ON s.attendanceid = a.id
@@ -151,7 +153,12 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
     $dbPrefix = $dbPrefix ?? $CFG->prefix;
 
     $sqlQueryInteractiveVideo = "
-        SELECT h.name, h.json_content, cm.id, cmc.timemodified 
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY cm.id) AS rownum,
+            h.name, 
+            h.json_content, 
+            cm.id, 
+            cmc.timemodified
         FROM {$dbPrefix}course_modules_completion cmc
         JOIN {$dbPrefix}course_modules cm ON cmc.coursemoduleid = cm.id
         JOIN {$dbPrefix}hvp h ON cm.instance = h.id
