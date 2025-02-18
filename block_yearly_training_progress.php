@@ -67,8 +67,10 @@ class block_yearly_training_progress extends block_base
         global $CFG;
 
         $activityData = get_attendance_sessions($myId, "attendance", $DB);
-        error_log("activityData: " . print_r($activityData, true));
+        // error_log("activityData: " . print_r($activityData, true));
         $activityData = array_merge($activityData, getInteractiveVideoData($myId, "hvp", $DB));
+        $activityData = array_merge($activityData, get_quiz_attempt_data($myId, "manual-input-progress-training", "quiz", $DB));
+        // error_log("activityData: " . print_r($activityData, true));
         // $dummyData = [];
 
         // for ($i = 0; $i < 20; $i++) {
@@ -87,11 +89,6 @@ class block_yearly_training_progress extends block_base
         // }
         // error_log("activityData: " . print_r($activityData, true));
 
-        // Sort activities by date in descending order
-        usort($activityData, function ($a, $b) {
-            return strtotime($b['Tanggal']) - strtotime($a['Tanggal']);
-        });
-
         $courseOverviewTable = "
         <table class='simple-table' id='course-overview-table'>
             <thead style='position: sticky; top: -1px; background-color: #fff; z-index: 1;'>
@@ -105,8 +102,8 @@ class block_yearly_training_progress extends block_base
 
         $durationTotal = 0;
         foreach ($activityData as $activity) {
-            $duration = $activity['Durasi'];
-            if ($duration !== null) {
+            $duration = $activity['Durasi'] ?? null;
+            if ($duration !== null && isset($activity['Tanggal'])) {
                 $durationTotal += $duration;
             }
         }
@@ -114,20 +111,29 @@ class block_yearly_training_progress extends block_base
 
         $PROGRESS_BAR_COLOR = "#007bff";
         $PROGRESS_BAR_BACKGROUND_COLOR = "#E9ECEF";
+        
 
+        // Sort activities by date in descending order
+        usort($activityData, function ($a, $b) {
+            $dateA = isset($a['Tanggal']) && is_numeric($a['Tanggal']) ? (int)$a['Tanggal'] : 0;
+    $dateB = isset($b['Tanggal']) && is_numeric($b['Tanggal']) ? (int)$b['Tanggal'] : 0;
+            return $dateB - $dateA;
+        });
+        // error_log("AFTER SORTING: " . print_r($activityData, true));
         foreach ($activityData as $activity) {
-            $description = $activity['Nama Aktivitas'];
-            $duration = $activity['Durasi'];
-            $link = $activity['link'];
-            $month = date('m', strtotime($activity['Tanggal']));
+            $description = $activity['Nama Aktivitas'] ?? 'N/A';
+            $duration = $activity['Durasi'] ?? null;
+            $link = $activity['link'] ?? null;
+            $month = null;
+            if (isset($activity['Tanggal'])) {
+                $month = date('m', strtotime($activity['Tanggal']));
+            }
             $description = str_replace(array('<p>', '</p>'), '', $description);
-
+        
             if ($duration === null) {
                 // Handle the case where duration is null
-                // For example, you can set a default value or skip processing
                 $duration_text = 'N/A'; // Set a default text for null duration
                 $progress = calculate_progress($durationTotalCopy);
-                // Cap the progress at 100%
                 if ($progress > 100) {
                     $progress = 100;
                 }
@@ -141,30 +147,30 @@ class block_yearly_training_progress extends block_base
                 $gradient_style = "background:linear-gradient(to right, {$PROGRESS_BAR_COLOR} 0%, {$PROGRESS_BAR_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} {$progress}%, {$PROGRESS_BAR_BACKGROUND_COLOR} 100%) bottom no-repeat; background-size:100% 3px;";
                 $durationTotalCopy -= $duration;
             }
+        
+            $waktuPencatatanAktivitas = $activity['Waktu Pencatatan Aktivitas'] ?? null;
+            $durationOverlayText = $duration ? formatDuration($duration) : 'N/A';
+            $activityType = $activity['Tipe Aktivitas'] ?? null;
 
-            // $courseOverviewTable .= "
-            //     <tr style='{$gradient_style}; background-color:hsla(224, 70.40%, 94.70%, 0.10);' data-month='{$month}'>
-            //         <td><a href='{$link}' class='description' data-full-text='{$description}'>{$description}</a></td>
-            //         <td>{$duration_text}</td>
-            //     </tr>
-            // ";
-
-            // <a href='#' class='description' data-full-text='{$description}' data-activity-name='{$description}' data-activity-time='{$waktuPencatatanAktivitas}' data-activity-duration='{$durationOverlayText}' data-activity-link='{$link}'>
-
-            $waktuPencatatanAktivitas = $activity['Waktu Pencatatan Aktivitas'];
-            $durationOverlayText = "N/A";
-            if ($duration) {
-                $durationOverlayText = formatDuration($duration);
-            }
-            $activityType = $activity['Tipe Aktivitas'];
-            $courseOverviewTable .= "
+            if ($month === null) {
+                $courseOverviewTable .= "
+                    <tr style='background-color:hsl(17deg 100% 50% / 21%);' data-month='{$month}'>
+                        <td>
+                            <a href='#' class='description' data-full-text='{$description}' data-activity-name='(Maaf, terjadi kesalahan saat memproses tanggal. Tolong hubungi administrator untuk menyelesaikan hal ini)' data-activity-time='{$waktuPencatatanAktivitas}' data-activity-duration='{$durationOverlayText}' data-activity-link='{$link}' data-activity-type='{$activityType}'></a>
+                        </td>
+                        <td>{$duration_text}</td>
+                    </tr>
+                ";
+            } else {
+                $courseOverviewTable .= "
                 <tr style='{$gradient_style}; background-color:hsla(224, 70.40%, 94.70%, 0.10);' data-month='{$month}'>
                     <td>
-                    <a href='#' class='description' data-full-text='{$description}' data-activity-name='{$description}' data-activity-time='{$waktuPencatatanAktivitas}' data-activity-duration='{$durationOverlayText}' data-activity-link='{$link}'
-                    data-activity-type='{$activityType}'></a></td>
+                        <a href='#' class='description' data-full-text='{$description}' data-activity-name='{$description}' data-activity-time='{$waktuPencatatanAktivitas}' data-activity-duration='{$durationOverlayText}' data-activity-link='{$link}' data-activity-type='{$activityType}'></a>
+                    </td>
                     <td>{$duration_text}</td>
                 </tr>
             ";
+            }
         }
         $courseOverviewTable .= "
                 </tbody>

@@ -137,7 +137,7 @@ $sqlQueryAttendance = "
             $activityData[] = [
                 'Nama Aktivitas' => $recordAttendance->description,
                 'Durasi' => $recordAttendance->duration,
-                'Tanggal' => date('Y-m-d', $recordAttendance->sessdate),
+                'Tanggal' => $recordAttendance->sessdate,
                 'link' => new moodle_url('/mod/attendance/view.php', ['id' => $recordAttendance->id, "view" => 5]),
                 'Waktu Pencatatan Aktivitas' => $datetimeTimetaken,
                 'Tipe Aktivitas' => 'Presensi Kehadiran'
@@ -210,4 +210,348 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
  */
 function calculate_progress($durationTotal, $maxTrainingHoursAccreditation = 20) {
     return ($durationTotal / 3600) * (100 / $maxTrainingHoursAccreditation); // Scale to 100% for max training hours
+}
+
+/**
+ * Get quiz attempt data for a user based on a specific tag.
+ *
+ * @param int $userId User ID.
+ * @param string $tagName Tag name.
+ * @param object $DB Moodle database object.
+ * @return array Quiz attempt data.
+ */
+function get_quiz_attempt_data($userId, $tagName, $moduleName, $DB) {
+    global $CFG;
+
+    $sqlQuery = "
+    SELECT 
+        ROW_NUMBER() OVER (ORDER BY cm.id) AS rownum,
+        qn.questiontext AS questiontext,
+        qat.responsesummary,
+        q.sumgrades AS thresholdgrade,
+        qat.questionusageid,
+        qa.sumgrades,
+        qat.timemodified,
+        qasd.value AS feedback,
+        qa.id AS quizattemptid,
+        cm.id AS cmid
+    FROM 
+        {quiz_attempts} qa
+    JOIN 
+        {quiz} q ON qa.quiz = q.id
+    JOIN
+        {course_modules} cm ON cm.instance = q.id
+    JOIN
+        {modules} m ON cm.module = m.id
+    JOIN 
+        {tag_instance} ti ON ti.itemid = cm.id
+    JOIN 
+        {tag} t ON t.id = ti.tagid
+    JOIN 
+        {question_attempts} qat ON qat.questionusageid = qa.uniqueid
+    JOIN
+        {question} qn ON qn.id = qat.questionid
+    JOIN
+        (
+        SELECT 
+            qas_inner.questionattemptid,
+            qas_inner.id
+        FROM
+            {question_attempt_steps} qas_inner
+        WHERE
+            qas_inner.sequencenumber = (
+                SELECT MAX(qas_inner2.sequencenumber)
+                FROM {question_attempt_steps} qas_inner2
+                WHERE qas_inner2.questionattemptid = qas_inner.questionattemptid
+            )
+        ) qas ON qas.questionattemptid = qat.id
+    LEFT JOIN
+        {question_attempt_step_data} qasd ON qasd.id = (
+            SELECT MAX(qasd_inner.id)
+            FROM {question_attempt_step_data} qasd_inner
+            WHERE qasd_inner.attemptstepid = qas.id
+            AND (qasd_inner.name = '-comment' OR qasd_inner.name IS NULL)
+        )
+    WHERE 
+        t.name = :tagname
+        AND qa.userid = :userid
+        AND qa.state = 'finished'
+        AND (qasd.name = '-comment' OR qasd.name IS NULL)
+        AND m.name = :modulename
+";
+    
+//     $sqlQuery = "
+//     SELECT 
+//         ROW_NUMBER() OVER (ORDER BY cm.id) AS rownum,
+//         qn.questiontext AS questiontext,
+//         qat.responsesummary,
+//         q.sumgrades AS thresholdgrade,
+//         qat.questionusageid,
+//         qa.sumgrades,
+//         qat.timemodified,
+//         qasd.value AS feedback,
+//         qa.id AS quizattemptid,
+//         cm.id AS cmid
+//     FROM 
+//         {quiz_attempts} qa
+//     JOIN 
+//         {quiz} q ON qa.quiz = q.id
+//     JOIN
+//         {course_modules} cm ON cm.instance = q.id
+//     JOIN
+//         {modules} m ON cm.module = m.id
+//     JOIN 
+//         {tag_instance} ti ON ti.itemid = cm.id
+//     JOIN 
+//         {tag} t ON t.id = ti.tagid
+//     JOIN 
+//         {question_attempts} qat ON qat.questionusageid = qa.uniqueid
+//     JOIN
+//         {question} qn ON qn.id = qat.questionid
+//     JOIN
+//         {question_attempt_steps} qas ON qas.questionattemptid = qat.id
+//     LEFT JOIN
+//         {question_attempt_step_data} qasd ON qasd.id = (
+//             SELECT MAX(qasd_inner.id)
+//             FROM {question_attempt_step_data} qasd_inner
+//             WHERE qasd_inner.attemptstepid = qas.id
+//             AND (qasd_inner.name = '-comment' OR qasd_inner.name IS NULL)
+//         )
+//     WHERE 
+//         t.name = :tagname
+//         AND qa.userid = :userid
+//         AND qa.state = 'finished'
+//         AND (qasd.name = '-comment' OR qasd.name IS NULL)
+//         AND m.name = :modulename
+// ";
+
+// $sqlQuery = "
+// SELECT 
+//     ROW_NUMBER() OVER (ORDER BY cm.id) AS rownum,
+//     qn.questiontext AS questiontext,
+//     qat.responsesummary,
+//     q.sumgrades AS thresholdgrade,
+//     qat.questionusageid,
+//     qa.sumgrades,
+//     qat.timemodified,
+//     qasd.value AS feedback,
+//     qa.id AS quizattemptid,
+//     cm.id AS cmid
+// FROM 
+//     {quiz_attempts} qa
+// JOIN 
+//     {quiz} q ON qa.quiz = q.id
+// JOIN
+//     {course_modules} cm ON cm.instance = q.id
+// JOIN
+//     {modules} m ON cm.module = m.id
+// JOIN 
+//     {tag_instance} ti ON ti.itemid = cm.id
+// JOIN 
+//     {tag} t ON t.id = ti.tagid
+// JOIN 
+//     {question_attempts} qat ON qat.questionusageid = qa.uniqueid
+// JOIN
+//     {question} qn ON qn.id = qat.questionid
+// LEFT JOIN
+//     (
+//     SELECT 
+//         qas_inner.questionattemptid,
+//         qasd_inner1.value
+//     FROM 
+//         {question_attempt_steps} qas_inner
+//     LEFT JOIN 
+//         {question_attempt_step_data} qasd_inner1 ON qasd_inner1.id = (
+//             SELECT MAX(qasd_inner.id)
+//             FROM {question_attempt_step_data} qasd_inner
+//             WHERE qasd_inner.attemptstepid = qas_inner.id
+//             AND (qasd_inner.name = '-comment' OR qasd_inner.name IS NULL)
+//         )
+//     ) qasd ON qasd.questionattemptid = qat.id
+// WHERE 
+//     t.name = :tagname
+//     AND qa.userid = :userid
+//     AND qa.state = 'finished'
+    
+//     AND m.name = :modulename
+// ";
+    
+    $params = [
+        'tagname' => $tagName,
+        'userid' => $userId,
+        'modulename' => $moduleName
+    ];
+    
+    $records = $DB->get_records_sql($sqlQuery, $params);
+
+    // error_log('$tagName = ' . $tagName);
+    // error_log('$userId = ' . $userId);
+    // error_log('$moduleName = ' . $moduleName);
+    // error_log("JOJO123");
+    // error_log('Jojojo');
+    // error_log(print_r($records, true));
+
+    $activityData = [];
+    $groupedRecords = [];
+
+    error_log('records = ' . print_r($records, true));
+    // Group records by questionusageid
+    foreach ($records as $record) {
+        $questionusageid = $record->questionusageid;
+        if (!isset($groupedRecords[$questionusageid])) {
+            $groupedRecords[$questionusageid] = [];
+        }
+        $groupedRecords[$questionusageid][] = $record;
+    }
+
+    // Process grouped records
+    foreach ($groupedRecords as $questionusageid => $group) {
+        $activityDatum = [];
+        $timeModifiedArray = [];
+        
+        foreach ($group as $record) {
+            $parsedData = parse_html_for_data_parse($record->questiontext);
+            if (empty($parsedData)) {
+                continue;
+            }
+            if (isset($parsedData['nama-aktivitas'])) {
+                $activityDatum['Nama Aktivitas'] = $record->responsesummary;
+                if ($record->feedback !== null && $record->feedback !== '') {
+                    $cleanedFeedback = strip_tags($record->feedback);
+                    $cleanedFeedback = str_replace(["\r", "\n", ' '], '', $cleanedFeedback);
+                    $activityDatum['Nama Aktivitas'] = $cleanedFeedback;
+                }
+            }
+            if (isset($parsedData['durasi'])) {
+                error_log('parse_duration_to_seconds = ' . parse_duration_to_seconds($record->responsesummary));
+                $activityDatum['Durasi'] = parse_duration_to_seconds($record->responsesummary);
+                // error_log('[DURASI] record-responsesummary = ' . $record->responsesummary);
+            
+                if ($record->feedback) {
+                    error_log('[DURASI-FEEDBACK] record-feedback = ' . $record->feedback);
+                    
+                    $cleanedFeedback = strip_tags($record->feedback);
+                    $cleanedFeedback = str_replace(["\r", "\n", ' '], '', $cleanedFeedback);
+                    
+                    // error_log('[DURASI-FEEDBACK-STRIP] record-feedback = ' . $cleanedFeedback);
+                    // error_log('[DURASI-FEEDBACK-STRIP-PARSE] record-feedback = ' . parse_duration_to_seconds($cleanedFeedback));
+                    
+                    $activityDatum['Durasi'] = parse_duration_to_seconds($cleanedFeedback);
+                }
+            }
+            if (isset($parsedData['tanggal-awal'])) {
+                $activityDatum['Tanggal'] = parse_date_to_unixtime($record->responsesummary);
+                if ($record->feedback) {
+                    $cleanedFeedback = strip_tags($record->feedback);
+                    $cleanedFeedback = str_replace(["\r", "\n", ' '], '', $cleanedFeedback);
+                    $activityDatum['Tanggal'] = parse_date_to_unixtime($cleanedFeedback);
+                }
+            }
+            $timeModifiedArray[] = $record->timemodified;
+        }
+        // Skip the group if 'tanggal-awal' does not exist or activityDatum['Tanggal'] is null
+        // if (!isset($activityDatum['Tanggal']) || $activityDatum['Tanggal'] === null ) {
+        //     $error_words = "(Maaf, terjadi kesalahan saat memproses tanggal. Tolong hubungi administrator untuk menyelesaikan hal ini) ";
+        //     $activityDatum['Nama Aktivitas'] = $error_words . $activityDatum['Nama Aktivitas'];
+        // }
+        // error_log('Nama Aktivitas = ' . $activityDatum['Nama Aktivitas']);
+        // error_log('thresholdgrade = ' . $record->thresholdgrade);
+        // error_log('record->sumgrades = ' . $record->sumgrades);
+        // error_log('tanggal = ' . $activityDatum['Tanggal'] ?? null);
+        if ($record->sumgrades < $record->thresholdgrade) {
+            continue;
+        }
+        # If tanggal isn't this year, then skip
+        if (isset($activityDatum['Tanggal']) && is_numeric($activityDatum['Tanggal']) && (int)$activityDatum['Tanggal'] > 0) {
+            if (date('Y', $activityDatum['Tanggal']) != date('Y')) {
+                continue;
+            }
+        } 
+        // error_log("JUJUJUJU");
+        // error_log(print_r($timeModifiedArray, true));
+        $activityDatum ['link'] = new moodle_url('/mod/quiz/review.php', ['attempt' => $record->quizattemptid, 'cmid' => $record->cmid]);
+        $activityDatum ['Waktu Pencatatan Aktivitas'] = format_timestamp(max($timeModifiedArray));
+        $activityDatum ['Tipe Aktivitas'] = 'Manual Input';
+
+        $activityData[] = $activityDatum;
+    }
+    
+    error_log('activityData = ' . print_r($activityData, true));
+    
+
+    return $activityData;
+}
+function parse_html_for_data_parse($htmlContent) {
+    $dom = new DOMDocument();
+    @$dom->loadHTML($htmlContent); // Suppress warnings for invalid HTML
+
+    $xpath = new DOMXPath($dom);
+    $elements = $xpath->query('//*[@data-parse]');
+
+    $parsedData = [];
+    foreach ($elements as $element) {
+        $dataParseValue = $element->getAttribute('data-parse');
+        $parsedData[$dataParseValue] = $element->nodeValue;
+    }
+
+    return $parsedData;
+}
+/**
+ * Parse a duration string in the format hh:mm into seconds.
+ *
+ * @param string $durationString Duration string in the format hh:mm:ss.
+ * @return int|null Duration in seconds or null if the format is incorrect.
+ */
+function parse_duration_to_seconds($durationString) {
+    if (preg_match('/^(\d+):(\d+)$/', $durationString, $matches)) {
+        $hours = (int)$matches[1];
+        $minutes = (int)$matches[2];
+
+        return ($hours * 3600) + ($minutes * 60);
+    } else {
+        return null;
+    }
+}
+
+/**
+ * Parse a date string in the format dd/mm/yyyy into Unix time with 00:00 as the HH:mm.
+ *
+ * @param string $dateString Date string in the format dd/mm/yyyy.
+ * @return int|null Unix time or null if the format is incorrect.
+ */
+function parse_date_to_unixtime($dateString) {
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateString, $matches)) {
+        $day = (int)$matches[1];
+        $month = (int)$matches[2];
+        $year = (int)$matches[3];
+
+        // Validate the date
+        if (!checkdate($month, $day, $year)) {
+            return null;
+        }
+
+        $dateTime = new DateTime();
+        $dateTime->setDate($year, $month, $day);
+        $dateTime->setTime(0, 0);
+
+        return $dateTime->getTimestamp();
+    } else {
+        return null;
+    }
+}
+
+    /**
+ * Format a timestamp into a specific date and time format.
+ *
+ * @param int $timestamp Unix timestamp.
+ * @param string $locale Locale for formatting.
+ * @param string $pattern Date and time pattern.
+ * @return string Formatted date and time.
+ */
+function format_timestamp($timestamp, $locale = 'id_ID', $pattern = 'HH:mm, dd MMMM yyyy') {
+    $datetime = new DateTime();
+    $datetime->setTimestamp($timestamp);
+    $formatter = new IntlDateFormatter($locale, IntlDateFormatter::FULL, IntlDateFormatter::FULL);
+    $formatter->setPattern($pattern);
+    return $formatter->format($datetime);
 }
