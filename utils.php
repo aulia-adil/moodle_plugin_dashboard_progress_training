@@ -166,13 +166,15 @@ function getInteractiveVideoData($userId, $moduleName, $DB, $dbPrefix = null) {
         WHERE cmc.userid = :userid
         AND YEAR(FROM_UNIXTIME(h.timecreated)) = :currentyear
         AND m.name = :modulename
-        AND cmc.completionstate <> :completionstate
+        AND (cmc.completionstate = :completionstate1 OR cmc.completionstate = :completionstate2)
     ";
-    $COMPLETION_STATUS_INCOMPLETE = 0;
+    $COMPLETION_STATUS_COMPLETE = 1;
+    $COMPLETION_STATUS_COMPLETE_WITH_PASS = 2;
     $paramsInteractiveVideo = [
         'userid' => $userId,
         'modulename' => $moduleName,
-        'completionstate' => $COMPLETION_STATUS_INCOMPLETE,
+        'completionstate1' => $COMPLETION_STATUS_COMPLETE,
+        'completionstate2' => $COMPLETION_STATUS_COMPLETE_WITH_PASS,
         'currentyear' => date('Y')
     ];
 
