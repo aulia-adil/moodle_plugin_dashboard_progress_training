@@ -279,102 +279,7 @@ function get_quiz_attempt_data($userId, $tagName, $moduleName, $DB) {
         AND (qasd.name = '-comment' OR qasd.name IS NULL)
         AND m.name = :modulename
 ";
-    
-//     $sqlQuery = "
-//     SELECT 
-//         ROW_NUMBER() OVER (ORDER BY cm.id) AS rownum,
-//         qn.questiontext AS questiontext,
-//         qat.responsesummary,
-//         q.sumgrades AS thresholdgrade,
-//         qat.questionusageid,
-//         qa.sumgrades,
-//         qat.timemodified,
-//         qasd.value AS feedback,
-//         qa.id AS quizattemptid,
-//         cm.id AS cmid
-//     FROM 
-//         {quiz_attempts} qa
-//     JOIN 
-//         {quiz} q ON qa.quiz = q.id
-//     JOIN
-//         {course_modules} cm ON cm.instance = q.id
-//     JOIN
-//         {modules} m ON cm.module = m.id
-//     JOIN 
-//         {tag_instance} ti ON ti.itemid = cm.id
-//     JOIN 
-//         {tag} t ON t.id = ti.tagid
-//     JOIN 
-//         {question_attempts} qat ON qat.questionusageid = qa.uniqueid
-//     JOIN
-//         {question} qn ON qn.id = qat.questionid
-//     JOIN
-//         {question_attempt_steps} qas ON qas.questionattemptid = qat.id
-//     LEFT JOIN
-//         {question_attempt_step_data} qasd ON qasd.id = (
-//             SELECT MAX(qasd_inner.id)
-//             FROM {question_attempt_step_data} qasd_inner
-//             WHERE qasd_inner.attemptstepid = qas.id
-//             AND (qasd_inner.name = '-comment' OR qasd_inner.name IS NULL)
-//         )
-//     WHERE 
-//         t.name = :tagname
-//         AND qa.userid = :userid
-//         AND qa.state = 'finished'
-//         AND (qasd.name = '-comment' OR qasd.name IS NULL)
-//         AND m.name = :modulename
-// ";
 
-// $sqlQuery = "
-// SELECT 
-//     ROW_NUMBER() OVER (ORDER BY cm.id) AS rownum,
-//     qn.questiontext AS questiontext,
-//     qat.responsesummary,
-//     q.sumgrades AS thresholdgrade,
-//     qat.questionusageid,
-//     qa.sumgrades,
-//     qat.timemodified,
-//     qasd.value AS feedback,
-//     qa.id AS quizattemptid,
-//     cm.id AS cmid
-// FROM 
-//     {quiz_attempts} qa
-// JOIN 
-//     {quiz} q ON qa.quiz = q.id
-// JOIN
-//     {course_modules} cm ON cm.instance = q.id
-// JOIN
-//     {modules} m ON cm.module = m.id
-// JOIN 
-//     {tag_instance} ti ON ti.itemid = cm.id
-// JOIN 
-//     {tag} t ON t.id = ti.tagid
-// JOIN 
-//     {question_attempts} qat ON qat.questionusageid = qa.uniqueid
-// JOIN
-//     {question} qn ON qn.id = qat.questionid
-// LEFT JOIN
-//     (
-//     SELECT 
-//         qas_inner.questionattemptid,
-//         qasd_inner1.value
-//     FROM 
-//         {question_attempt_steps} qas_inner
-//     LEFT JOIN 
-//         {question_attempt_step_data} qasd_inner1 ON qasd_inner1.id = (
-//             SELECT MAX(qasd_inner.id)
-//             FROM {question_attempt_step_data} qasd_inner
-//             WHERE qasd_inner.attemptstepid = qas_inner.id
-//             AND (qasd_inner.name = '-comment' OR qasd_inner.name IS NULL)
-//         )
-//     ) qasd ON qasd.questionattemptid = qat.id
-// WHERE 
-//     t.name = :tagname
-//     AND qa.userid = :userid
-//     AND qa.state = 'finished'
-    
-//     AND m.name = :modulename
-// ";
     
     $params = [
         'tagname' => $tagName,
@@ -384,17 +289,10 @@ function get_quiz_attempt_data($userId, $tagName, $moduleName, $DB) {
     
     $records = $DB->get_records_sql($sqlQuery, $params);
 
-    // error_log('$tagName = ' . $tagName);
-    // error_log('$userId = ' . $userId);
-    // error_log('$moduleName = ' . $moduleName);
-    // error_log("JOJO123");
-    // error_log('Jojojo');
-    // error_log(print_r($records, true));
-
     $activityData = [];
     $groupedRecords = [];
 
-    error_log('records = ' . print_r($records, true));
+    // error_log('records = ' . print_r($records, true));
     // Group records by questionusageid
     foreach ($records as $record) {
         $questionusageid = $record->questionusageid;
@@ -423,19 +321,16 @@ function get_quiz_attempt_data($userId, $tagName, $moduleName, $DB) {
                 }
             }
             if (isset($parsedData['durasi'])) {
-                error_log('parse_duration_to_seconds = ' . parse_duration_to_seconds($record->responsesummary));
+                // error_log('parse_duration_to_seconds = ' . parse_duration_to_seconds($record->responsesummary));
                 $activityDatum['Durasi'] = parse_duration_to_seconds($record->responsesummary);
                 // error_log('[DURASI] record-responsesummary = ' . $record->responsesummary);
             
                 if ($record->feedback) {
-                    error_log('[DURASI-FEEDBACK] record-feedback = ' . $record->feedback);
+                    // error_log('[DURASI-FEEDBACK] record-feedback = ' . $record->feedback);
                     
                     $cleanedFeedback = strip_tags($record->feedback);
                     $cleanedFeedback = str_replace(["\r", "\n", ' '], '', $cleanedFeedback);
-                    
-                    // error_log('[DURASI-FEEDBACK-STRIP] record-feedback = ' . $cleanedFeedback);
-                    // error_log('[DURASI-FEEDBACK-STRIP-PARSE] record-feedback = ' . parse_duration_to_seconds($cleanedFeedback));
-                    
+                   
                     $activityDatum['Durasi'] = parse_duration_to_seconds($cleanedFeedback);
                 }
             }
@@ -449,15 +344,7 @@ function get_quiz_attempt_data($userId, $tagName, $moduleName, $DB) {
             }
             $timeModifiedArray[] = $record->timemodified;
         }
-        // Skip the group if 'tanggal-awal' does not exist or activityDatum['Tanggal'] is null
-        // if (!isset($activityDatum['Tanggal']) || $activityDatum['Tanggal'] === null ) {
-        //     $error_words = "(Maaf, terjadi kesalahan saat memproses tanggal. Tolong hubungi administrator untuk menyelesaikan hal ini) ";
-        //     $activityDatum['Nama Aktivitas'] = $error_words . $activityDatum['Nama Aktivitas'];
-        // }
-        // error_log('Nama Aktivitas = ' . $activityDatum['Nama Aktivitas']);
-        // error_log('thresholdgrade = ' . $record->thresholdgrade);
-        // error_log('record->sumgrades = ' . $record->sumgrades);
-        // error_log('tanggal = ' . $activityDatum['Tanggal'] ?? null);
+        
         if ($record->sumgrades < $record->thresholdgrade) {
             continue;
         }
@@ -467,8 +354,7 @@ function get_quiz_attempt_data($userId, $tagName, $moduleName, $DB) {
                 continue;
             }
         } 
-        // error_log("JUJUJUJU");
-        // error_log(print_r($timeModifiedArray, true));
+        
         $activityDatum ['link'] = new moodle_url('/mod/quiz/review.php', ['attempt' => $record->quizattemptid, 'cmid' => $record->cmid]);
         $activityDatum ['Waktu Pencatatan Aktivitas'] = format_timestamp(max($timeModifiedArray));
         $activityDatum ['Tipe Aktivitas'] = 'Manual Input';
@@ -476,7 +362,7 @@ function get_quiz_attempt_data($userId, $tagName, $moduleName, $DB) {
         $activityData[] = $activityDatum;
     }
     
-    error_log('activityData = ' . print_r($activityData, true));
+    // error_log('activityData = ' . print_r($activityData, true));
     
 
     return $activityData;
