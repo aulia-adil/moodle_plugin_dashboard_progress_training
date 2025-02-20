@@ -404,10 +404,14 @@ function parse_duration_to_seconds($durationString) {
 /**
  * Parse a date string in the format dd/mm/yyyy into Unix time with 00:00 as the HH:mm.
  *
- * @param string $dateString Date string in the format dd/mm/yyyy.
+ * @param string|null $dateString Date string in the format dd/mm/yyyy.
  * @return int|null Unix time or null if the format is incorrect.
  */
 function parse_date_to_unixtime($dateString) {
+    if ($dateString === null) {
+        return null;
+    }
+
     if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateString, $matches)) {
         $day = (int)$matches[1];
         $month = (int)$matches[2];
